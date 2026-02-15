@@ -97,6 +97,38 @@
             display: flex;
             width: 100%;
             max-width: 600px;
+            position: relative;
+        }
+
+        .search-suggestions {
+            display: none;
+            position: absolute;
+            top: 42px;
+            left: 0;
+            right: 0;
+            background-color: #212121;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+            z-index: 2000;
+            padding: 8px 0;
+            border: 1px solid var(--border-color);
+        }
+
+        .suggestion-item {
+            display: flex;
+            align-items: center;
+            padding: 8px 16px;
+            gap: 16px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .suggestion-item:hover {
+            background-color: var(--hover-bg);
+        }
+
+        .suggestion-item svg {
+            color: var(--text-secondary);
         }
 
         .search-wrapper input {
@@ -583,7 +615,7 @@
         }
 
         .video-title {
-            font-size: 16px;
+            font-size: 15px;
             font-weight: 500;
             margin: 0 0 4px 0;
             display: -webkit-box;
@@ -591,16 +623,20 @@
             -webkit-box-orient: vertical;
             overflow: hidden;
             line-height: 1.4;
+            letter-spacing: 0.1px;
         }
 
         .channel-name {
-            font-size: 14px;
+            font-size: 13px;
             color: var(--text-secondary);
             margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 4px;
         }
 
         .video-meta {
-            font-size: 14px;
+            font-size: 13px;
             color: var(--text-secondary);
             margin: 0;
         }
@@ -775,6 +811,19 @@
             overflow-y: auto;
         }
 
+        .ambient-glow {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 40%;
+            background: radial-gradient(circle at center, rgba(157, 78, 221, 0.4) 0%, rgba(15, 15, 15, 0) 70%);
+            filter: blur(60px);
+            z-index: 4999;
+            pointer-events: none;
+            transition: background 1s ease;
+        }
+
         .video-player-container {
             width: 100%;
             aspect-ratio: 16/9;
@@ -782,6 +831,7 @@
             position: sticky;
             top: 0;
             z-index: 5001;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
         }
 
         .video-details-page {
@@ -863,18 +913,19 @@
             display: none;
             position: fixed;
             bottom: 56px;
-            left: 0;
-            right: 0;
+            left: 8px;
+            right: 8px;
             height: 64px;
-            background-color: #212121;
+            background-color: #282828;
             z-index: 1500;
             align-items: center;
-            padding: 0 12px;
-            border-bottom: 1px solid var(--border-color);
-            border-top: 1px solid var(--border-color);
+            padding: 0 8px;
+            border-radius: 12px;
             gap: 12px;
-            animation: slideInUp 0.3s ease-out;
+            animation: slideInUp 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
             cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+            border: 1px solid #333;
         }
 
         .mini-player-thumb {
@@ -917,13 +968,14 @@
 
         @media (min-width: 601px) {
             #mini-player {
-                bottom: 0;
-                left: 240px;
+                bottom: 16px;
+                left: 256px;
+                right: 16px;
             }
         }
         @media (max-width: 1000px) and (min-width: 601px) {
             #mini-player {
-                left: 72px;
+                left: 88px;
             }
         }
 
@@ -1257,7 +1309,8 @@
             <svg height="24" viewBox="0 0 24 24" width="24" fill="white"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"></path></svg>
         </button>
         <div class="search-wrapper">
-            <input type="text" id="search-input" placeholder="Telusuri">
+            <input type="text" id="search-input" placeholder="Telusuri" autocomplete="off">
+            <div id="search-suggestions" class="search-suggestions"></div>
             <button class="search-btn" id="search-btn">
                 <svg height="24" viewBox="0 0 24 24" width="24" fill="white"><path d="M20.87 20.17l-5.59-5.59C16.35 13.35 17 11.75 17 10c0-3.87-3.13-7-7-7s-7 3.13-7 7 3.13 7 7 7c1.75 0 3.35-.65 4.58-1.71l5.59 5.59.7-.71zM10 16c-3.31 0-6-2.69-6-6s2.69-6 6-6 6 2.69 6 6-2.69 6-6 6z"></path></svg>
             </button>
@@ -1392,6 +1445,7 @@
 </div>
 
 <div id="video-modal">
+    <div class="ambient-glow" id="ambient-glow"></div>
     <div class="video-player-container">
         <button class="icon-btn close-player-btn" id="close-player">
             <svg height="24" viewBox="0 0 24 24" width="24" fill="white"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"></path></svg>
@@ -1657,6 +1711,11 @@
             player.innerHTML = `<iframe src="https://www.youtube.com/embed/${videoId}?autoplay=1" allow="autoplay; fullscreen" allowfullscreen></iframe>`;
         }
 
+        // Set ambient glow color randomly from a set of nice colors or purple shades
+        const colors = ['rgba(157, 78, 221, 0.4)', 'rgba(123, 44, 191, 0.4)', 'rgba(90, 24, 154, 0.4)', 'rgba(60, 9, 108, 0.4)'];
+        const randomColor = colors[Math.floor(Math.random() * colors.length)];
+        document.getElementById('ambient-glow').style.background = `radial-gradient(circle at center, ${randomColor} 0%, rgba(15, 15, 15, 0) 70%)`;
+
         // Ensure player is in modal
         document.querySelector('.video-player-container').appendChild(player);
 
@@ -1817,13 +1876,19 @@
         setActiveSidebar('Anda');
         resultsGrid.innerHTML = `
             <div class="anda-header">
-                <div class="anda-avatar">P</div>
+                <div class="anda-avatar" style="background-color: var(--primary-color)">P</div>
                 <div class="anda-info">
-                    <h2>Playtube User</h2>
-                    <p>@playtubeuser • Lihat channel ></p>
-                    <div style="display: flex; gap: 8px; margin-top: 8px;">
-                        <button style="background: var(--hover-bg); border: none; color: white; padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 500;">Ganti akun</button>
-                        <button style="background: var(--hover-bg); border: none; color: white; padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 500;">Akun Google</button>
+                    <h2 style="font-size: 20px; font-weight: 700;">Playtube Premium User</h2>
+                    <p style="font-size: 13px;">@playtube_dev • Lihat channel ></p>
+                    <div style="display: flex; gap: 8px; margin-top: 12px;">
+                        <button style="background: var(--hover-bg); border: none; color: white; padding: 8px 16px; border-radius: 20px; font-size: 12px; font-weight: 500; display: flex; align-items: center; gap: 6px;">
+                            <svg height="18" viewBox="0 0 24 24" width="18" fill="white"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"></path></svg>
+                            Ganti akun
+                        </button>
+                        <button style="background: var(--hover-bg); border: none; color: white; padding: 8px 16px; border-radius: 20px; font-size: 12px; font-weight: 500; display: flex; align-items: center; gap: 6px;">
+                            <svg height="18" viewBox="0 0 24 24" width="18" fill="white"><path d="M12 22C6.47715 22 2 17.5228 2 12C2 6.47715 6.47715 2 12 2C17.5228 2 22 6.47715 22 12C22 17.5228 17.5228 22 12 22ZM12 20C16.4183 20 20 16.4183 20 12C20 7.58172 16.4183 4 12 4C7.58172 4 4 7.58172 4 12C4 16.4183 7.58172 20 12 20ZM11 7H13V9H11V7ZM11 11H13V17H11V11Z"></path></svg>
+                            Bantuan
+                        </button>
                     </div>
                 </div>
             </div>
@@ -1831,7 +1896,7 @@
             <div class="anda-section">
                 <div class="anda-section-header">
                     <span>Riwayat</span>
-                    <button style="background: none; border: 1px solid var(--border-color); color: white; padding: 4px 12px; border-radius: 16px; font-size: 12px;">Lihat semua</button>
+                    <button style="background: none; border: 1px solid var(--border-color); color: white; padding: 6px 16px; border-radius: 20px; font-size: 12px; font-weight: 500;">Lihat semua</button>
                 </div>
                 <div class="anda-history-list">
                     ${watchHistory.length > 0 ? watchHistory.map(v => {
@@ -1841,29 +1906,47 @@
                             <div class="anda-history-thumb">
                                 <img src="${v.snippet.thumbnails.high.url}" alt="">
                             </div>
-                            <div class="anda-history-title">${v.snippet.title}</div>
+                            <div class="anda-history-title" style="font-weight: 500; margin-top: 8px;">${v.snippet.title}</div>
                         </div>
                         `;
-                    }).join('') : '<p style="padding: 16px; color: var(--text-secondary);">Belum ada riwayat.</p>'}
+                    }).join('') : `
+                        <div style="padding: 24px; text-align: center; width: 100%;">
+                            <svg height="48" viewBox="0 0 24 24" width="48" fill="var(--text-secondary)" style="margin-bottom: 12px;"><path d="M13 3a9 9 0 0 0-9 9H1l3.89 3.89.07.14L9 12H6a7 7 0 1 1 7 7 7.07 7.07 0 0 1-6-3.22l-1.44 1.44A9 9 0 1 0 13 3z"></path></svg>
+                            <p style="color: var(--text-secondary); font-size: 14px;">Belum ada riwayat tontonan</p>
+                        </div>
+                    `}
                 </div>
             </div>
 
-            <div class="anda-section" style="border-bottom: none;">
-                <div class="anda-menu-item">
+            <div class="anda-section" style="border-bottom: none; padding-top: 8px;">
+                <div class="anda-menu-item" style="border-radius: 12px; margin: 4px 16px; background: rgba(255,255,255,0.03);">
                     <svg height="24" viewBox="0 0 24 24" width="24" fill="white"><path d="M10 14.65v-5.3L15 12l-5 2.65ZM13 13V7l5.2 3-5.2 3ZM22 13h-4v9h-2v-9h-2V7h8v6ZM2 13h1V7H2v6Zm3 0h1V7H5v6Zm3 0h1V7H8v6Z"></path></svg>
-                    <span>Video Anda</span>
+                    <div style="flex-grow: 1;">
+                        <div style="font-weight: 500;">Video Anda</div>
+                        <div style="font-size: 12px; color: var(--text-secondary);">12 video</div>
+                    </div>
+                    <svg height="24" viewBox="0 0 24 24" width="24" fill="var(--text-secondary)"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"></path></svg>
                 </div>
-                <div class="anda-menu-item">
+                <div class="anda-menu-item" style="border-radius: 12px; margin: 4px 16px;">
                     <svg height="24" viewBox="0 0 24 24" width="24" fill="white"><path d="M17 18V5H7v13h10zm1-14c.55 0 1 .45 1 1v14c0 .55-.45 1-1 1H6c-.55 0-1-.45-1-1V5c0-.55.45-1 1-1h12zM8 7h3v2H8V7zm0 4h8v2H8v-2zm0 4h8v2H8v-2z"></path></svg>
-                    <span>Download</span>
+                    <div style="flex-grow: 1;">
+                        <div style="font-weight: 500;">Download</div>
+                        <div style="font-size: 12px; color: var(--text-secondary);">20 video • Disimpan ke Playtube</div>
+                    </div>
                 </div>
-                <div class="anda-menu-item">
-                    <svg height="24" viewBox="0 0 24 24" width="24" fill="white"><path d="M18 7c0-1.1-.9-2-2-2h-1V2h-2v3h-2V2h-2v3H8V2H6v3H5c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7zM7 9h2v2H7V9zm0 4h2v2H7v-2zm10 4H7v-2h10v2zm0-4h-6v-2h6v2zm0-4h-6V9h6v2z"></path></svg>
-                    <span>Film Anda</span>
+                <div class="anda-menu-item" style="border-radius: 12px; margin: 4px 16px;">
+                    <svg height="24" viewBox="0 0 24 24" width="24" fill="white"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"></path></svg>
+                    <div style="flex-grow: 1;">
+                        <div style="font-weight: 500;">Video yang disukai</div>
+                        <div style="font-size: 12px; color: var(--text-secondary);">156 video</div>
+                    </div>
                 </div>
-                <div class="anda-menu-item">
-                    <svg height="24" viewBox="0 0 24 24" width="24" fill="white"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8-8-8-8 3.59-8 8 3.59 8 8 8zm4.59-12.42L10 14.17l-2.59-2.58L6 13l4 4 8-8-1.41-1.42z"></path></svg>
-                    <span>Dapatkan Premium</span>
+
+                <div style="padding: 16px 32px; font-weight: bold; font-size: 16px;">Setelan</div>
+
+                <div class="anda-menu-item" style="border-radius: 12px; margin: 4px 16px;">
+                    <svg height="24" viewBox="0 0 24 24" width="24" fill="white"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"></path></svg>
+                    <span>Setelan</span>
                 </div>
             </div>
         `;
@@ -1888,15 +1971,73 @@
         });
     }
 
+    // Search Suggestions Logic
+    const suggestionsBox = document.getElementById('search-suggestions');
+    let recentSearches = JSON.parse(localStorage.getItem('playtube_recent_searches') || '[]');
+
+    function updateRecentSearches(q) {
+        recentSearches = recentSearches.filter(item => item !== q);
+        recentSearches.unshift(q);
+        if (recentSearches.length > 10) recentSearches.pop();
+        localStorage.setItem('playtube_recent_searches', JSON.stringify(recentSearches));
+    }
+
+    function showSuggestions() {
+        const q = searchInput.value;
+        if (q === '' && recentSearches.length > 0) {
+            suggestionsBox.innerHTML = recentSearches.map(item => `
+                <div class="suggestion-item" onclick="selectSuggestion('${item}')">
+                    <svg height="24" viewBox="0 0 24 24" width="24" fill="currentColor"><path d="M13 3a9 9 0 0 0-9 9H1l3.89 3.89.07.14L9 12H6a7 7 0 1 1 7 7 7.07 7.07 0 0 1-6-3.22l-1.44 1.44A9 9 0 1 0 13 3z"></path></svg>
+                    <span>${item}</span>
+                </div>
+            `).join('');
+            suggestionsBox.style.display = 'block';
+        } else if (q.length > 0) {
+            // Mock suggestions
+            const mocks = [q, q + ' musik', q + ' shorts', q + ' trending', q + ' gaming'];
+            suggestionsBox.innerHTML = mocks.map(item => `
+                <div class="suggestion-item" onclick="selectSuggestion('${item}')">
+                    <svg height="24" viewBox="0 0 24 24" width="24" fill="currentColor"><path d="M20.87 20.17l-5.59-5.59C16.35 13.35 17 11.75 17 10c0-3.87-3.13-7-7-7s-7 3.13-7 7 3.13 7 7 7c1.75 0 3.35-.65 4.58-1.71l5.59 5.59.7-.71zM10 16c-3.31 0-6-2.69-6-6s2.69-6 6-6 6 2.69 6 6-2.69 6-6 6z"></path></svg>
+                    <span>${item}</span>
+                </div>
+            `).join('');
+            suggestionsBox.style.display = 'block';
+        } else {
+            suggestionsBox.style.display = 'none';
+        }
+    }
+
+    function selectSuggestion(val) {
+        searchInput.value = val;
+        suggestionsBox.style.display = 'none';
+        loadSearch(val);
+    }
+
+    searchInput.addEventListener('focus', showSuggestions);
+    searchInput.addEventListener('input', showSuggestions);
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('.search-wrapper')) {
+            suggestionsBox.style.display = 'none';
+        }
+    });
+
     searchBtn.onclick = () => {
         const q = searchInput.value;
-        if (q) loadSearch(q);
+        if (q) {
+            updateRecentSearches(q);
+            loadSearch(q);
+        }
     };
 
     searchInput.onkeypress = (e) => {
         if (e.key === 'Enter') {
             const q = searchInput.value;
-            if (q) loadSearch(q);
+            if (q) {
+                updateRecentSearches(q);
+                loadSearch(q);
+            }
+            suggestionsBox.style.display = 'none';
+            searchInput.blur();
         }
     };
 
