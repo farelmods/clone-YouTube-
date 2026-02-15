@@ -18,21 +18,37 @@ function escapeHTML(str) {
     });
 }
 
+function showProgress(percent) {
+    const bar = document.getElementById('progress-bar');
+    if (!bar) return;
+    bar.style.width = percent + '%';
+    if (percent >= 100) {
+        setTimeout(() => {
+            if (bar.style.width === '100%') bar.style.width = '0';
+        }, 300);
+    }
+}
+
 async function fetchVideos(url, layout = 'vertical') {
+    window.scrollTo(0, 0);
+    showProgress(30);
     resultsGrid.innerHTML = '';
     resultsGrid.style.animation = 'none';
     resultsGrid.offsetHeight; // trigger reflow
     resultsGrid.style.animation = null;
     renderSkeletons();
     try {
+        showProgress(60);
         const res = await fetch(url);
         const data = await res.json();
+        showProgress(100);
         if (data.items && data.items.length > 0) {
             renderVideos(data.items, layout);
         } else {
             renderMockVideos(layout);
         }
     } catch (error) {
+        showProgress(100);
         console.error(error);
         renderMockVideos(layout);
     }
@@ -243,13 +259,17 @@ function getRandomTime() {
 
 let currentVideoData = null;
 
-async function openVideo(videoId, videoData, isShort = false) {
+async function openVideo(videoId, videoData, isShort = false, pushState = true) {
     currentVideoData = videoData || {
         snippet: {
             title: 'Video Playtube Menarik',
             channelTitle: 'Playtube Channel'
         }
     };
+
+    if (pushState) {
+        history.pushState({ modal: 'video', videoId, videoData, isShort }, '');
+    }
 
     const player = document.getElementById('player');
     const wrapper = document.getElementById('player-wrapper');
@@ -394,10 +414,14 @@ function renderSuggestedVideos(items) {
     });
 }
 
-closePlayer.onclick = () => {
+const closeVideoModal = (fromPopState = false) => {
     videoModal.style.display = 'none';
     document.getElementById('comments-overlay').style.display = 'none';
     document.body.style.overflow = 'auto';
+
+    if (!fromPopState && history.state && history.state.modal === 'video') {
+        history.back();
+    }
 
     const mini = document.getElementById('mini-player');
     mini.style.display = 'flex';
@@ -407,6 +431,8 @@ closePlayer.onclick = () => {
     // Move player to mini thumb
     document.getElementById('mini-thumb').appendChild(document.getElementById('player'));
 };
+
+closePlayer.onclick = () => closeVideoModal();
 
 document.getElementById('mini-player').onclick = (e) => {
     if (e.target.closest('#mini-close')) {
@@ -435,9 +461,44 @@ window.onclick = (event) => {
     }
 };
 
+function renderEmptyHome() {
+    resultsGrid.innerHTML = `
+        <div class="empty-home-container">
+            <div class="empty-home-icon">
+                <svg width="80" height="80" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14.5v-9l6 4.5-6 4.5z"/></svg>
+            </div>
+            <h2 class="empty-home-title">Selamat Datang di Playtube</h2>
+            <p class="empty-home-msg">Mulai jelajahi video menarik dengan mencari atau memilih kategori favorit Anda di bawah ini.</p>
+            <div class="quick-actions">
+                <div class="quick-action-btn" onclick="loadTrendingVideos()">
+                    <svg width="24" height="24" viewBox="0 0 24 24"><path d="M4 10V21h6V15h4v6h6V10L12 3Z"></path></svg>
+                    <span>Terbaru</span>
+                </div>
+                <div class="quick-action-btn" onclick="loadCategory(10)">
+                    <svg width="24" height="24" viewBox="0 0 24 24"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"></path></svg>
+                    <span>Musik</span>
+                </div>
+                <div class="quick-action-btn" onclick="loadCategory(20)">
+                    <svg width="24" height="24" viewBox="0 0 24 24"><path d="M21 6H3c-1.1 0-2 .9-2 2v8c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-10 7H8v3H6v-3H3v-2h3V8h2v3h3v2zm4.5 2c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm4-3c-.83 0-1.5-.67-1.5-1.5S18.67 10 19.5 10s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"></path></svg>
+                    <span>Game</span>
+                </div>
+                <div class="quick-action-btn" onclick="loadSearch('teknologi')">
+                    <svg width="24" height="24" viewBox="0 0 24 24"><path d="M20 18c1.1 0 1.99-.9 1.99-2L22 6c0-1.1-.9-2-2-2H4c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2H0v2h24v-2h-4zM4 6h16v10H4V6z"></path></svg>
+                    <span>Teknologi</span>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
 function loadTrending() {
     setActiveSidebar('Beranda');
-    resultsGrid.innerHTML = ''; // Clear home as requested
+    renderEmptyHome();
+}
+
+function loadTrendingVideos() {
+    setActiveSidebar('Beranda');
+    fetchVideos('/api/trending');
 }
 
 function loadCategory(id) {
@@ -562,6 +623,7 @@ function updateRecentSearches(q) {
 
 function showSuggestions() {
     const q = searchInput.value;
+    if (clearSearchBtn) clearSearchBtn.style.display = q ? 'flex' : 'none';
     if (q === '' && recentSearches.length > 0) {
         suggestionsBox.innerHTML = '';
         recentSearches.forEach(item => {
@@ -700,10 +762,11 @@ const loginForm = document.getElementById('login-form');
 const mobileSearchBtn = document.getElementById('mobile-search-btn');
 
 const mobileSearchBack = document.getElementById('mobile-search-back');
+const clearSearchBtn = document.getElementById('clear-search-btn');
 
 mobileSearchBtn.onclick = () => {
     document.body.classList.add('mobile-search-active');
-    searchInput.focus();
+    setTimeout(() => searchInput.focus(), 100);
 };
 
 mobileSearchBack.onclick = () => {
@@ -751,6 +814,15 @@ function selectChip(el, category) {
 let lastScrollY = window.scrollY;
 const headerEl = document.querySelector('header');
 const categoriesBar = document.getElementById('categories-bar');
+
+if (clearSearchBtn) {
+    clearSearchBtn.onclick = () => {
+        searchInput.value = '';
+        clearSearchBtn.style.display = 'none';
+        searchInput.focus();
+        showSuggestions();
+    };
+}
 
 window.addEventListener('scroll', () => {
     if (window.innerWidth > 600) return;
@@ -935,6 +1007,14 @@ function updateSubscribeButton(btn, channelName) {
         btn.style.color = 'black';
     }
 }
+
+window.onpopstate = (event) => {
+    if (event.state && event.state.modal === 'video') {
+        openVideo(event.state.videoId, event.state.videoData, event.state.isShort, false);
+    } else {
+        closeVideoModal(true);
+    }
+};
 
 // Initial load
 checkLogin();
