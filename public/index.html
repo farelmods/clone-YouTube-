@@ -24,13 +24,14 @@
             box-sizing: border-box;
         }
 
-        body {
+        html, body {
             background-color: var(--bg-color);
             color: var(--text-color);
             font-family: 'Roboto', Arial, sans-serif;
             margin: 0;
             padding: 0;
             overflow-x: hidden;
+            width: 100%;
         }
 
         /* Header */
@@ -302,14 +303,23 @@
             aspect-ratio: 16 / 9;
             border-radius: 12px;
             overflow: hidden;
-            background-color: #222222;
+            background-color: #000;
             margin-bottom: 12px;
         }
 
         .thumbnail-container img {
             width: 100%;
             height: 100%;
-            object-fit: cover;
+            object-fit: contain; /* Changed to contain to avoid cropping important parts, with black background */
+            object-position: center;
+        }
+
+        /* Fluid suggested thumbnails for mobile */
+        .suggested-card .thumbnail-container {
+            width: 40%;
+            min-width: 120px;
+            margin-bottom: 0;
+            border-radius: 8px;
         }
 
         /* Shorts Section */
@@ -653,12 +663,12 @@
         .sheet-item {
             display: flex;
             align-items: center;
-            padding: 12px 16px;
+            padding: 16px;
             gap: 16px;
             cursor: pointer;
         }
 
-        .sheet-item:hover {
+        .sheet-item:active {
             background-color: var(--hover-bg);
         }
 
@@ -766,16 +776,44 @@
             display: flex;
             align-items: center;
             background-color: var(--hover-bg);
-            padding: 6px 12px;
+            padding: 8px 16px;
             border-radius: 20px;
             gap: 6px;
             white-space: nowrap;
             font-size: 12px;
             font-weight: 500;
+            transition: background 0.2s;
+        }
+
+        .action-item:active {
+            background-color: var(--active-bg);
         }
 
         .suggested-section {
             padding-top: 12px;
+        }
+
+        /* Collapsible Description */
+        .description-box {
+            background-color: var(--hover-bg);
+            padding: 12px;
+            border-radius: 12px;
+            margin-bottom: 16px;
+            cursor: pointer;
+        }
+
+        .description-text {
+            font-size: 14px;
+            line-height: 1.5;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .description-box.expanded .description-text {
+            display: block;
+            -webkit-line-clamp: unset;
         }
 
         .close-player-btn {
@@ -893,13 +931,20 @@
 
         .nav-item {
             display: flex;
+            flex: 1;
             flex-direction: column;
             align-items: center;
+            justify-content: center;
             color: var(--text-secondary);
             text-decoration: none;
             font-size: 10px;
             cursor: pointer;
             gap: 4px;
+            height: 100%;
+        }
+
+        .nav-item:active {
+            background-color: var(--hover-bg);
         }
 
         .nav-item svg {
@@ -1338,16 +1383,18 @@
         // Inject video info
         const content = document.getElementById('video-details-content');
         content.innerHTML = `
-            <h2>Video Playtube Menarik - Judul Video Berkualitas</h2>
-            <div class="meta">1.2 jt x ditonton • 2 jam yang lalu</div>
+            <h2 style="font-size: 16px;">Video Playtube Menarik - Judul Video Berkualitas untuk Tampilan Mobile</h2>
+            <div class="meta">1.2 jt x ditonton • 2 jam yang lalu ...lebih banyak</div>
+
             <div class="channel-info-bar">
                 <div class="channel-avatar">P</div>
                 <div>
-                    <div style="font-weight: bold;">Playtube Channel</div>
+                    <div style="font-weight: bold; font-size: 14px;">Playtube Channel</div>
                     <div class="subs-count">1.5 jt subscriber</div>
                 </div>
                 <button class="subscribe-btn">Subscribe</button>
             </div>
+
             <div class="actions-bar">
                 <div class="action-item">
                     <svg height="20" viewBox="0 0 24 24" width="20" fill="white"><path d="M1 21h4V9H1v12zm22-11c0-1.1-.9-2-2-2h-6.31l.95-4.57.03-.32c0-.41-.17-.79-.44-1.06L14.17 1 7.59 7.59C7.22 7.95 7 8.45 7 9v10c0 1.1.9 2 2 2h9c.83 0 1.54-.5 1.84-1.22l3.02-7.05c.09-.23.14-.47.14-.73v-2z"></path></svg>
@@ -1361,7 +1408,7 @@
                     <span>Bagikan</span>
                 </div>
                 <div class="action-item">
-                    <svg height="20" viewBox="0 0 24 24" width="20" fill="white"><path d="M17 18V5H7v13h10zm1-14c.55 0 1 .45 1 1v14c0 .55-.45 1-1 1H6c-.55 0-1-.45-1-1V5c0-.55.45-1 1-1h12z"></path></svg>
+                    <svg height="20" viewBox="0 0 24 24" width="20" fill="white"><path d="M17 18V5H7v13h10zm1-14c.55 0 1 .45 1 1v14c0 .55-.45 1-1 1H6c-.55 0-1-.45-1-1V5c0-.55.45-1 1-1h12zM8 7h3v2H8V7zm0 4h8v2H8v-2zm0 4h8v2H8v-2z"></path></svg>
                     <span>Download</span>
                 </div>
                 <div class="action-item">
@@ -1369,7 +1416,17 @@
                     <span>Simpan</span>
                 </div>
             </div>
+
+            <div class="description-box" id="description-trigger">
+                <div class="description-text">
+                    Deskripsi video yang sangat menarik dan mendetail akan muncul di bagian ini. User dapat membacanya lebih lengkap dengan mengetuk area ini. Kami memastikan bahwa semua konten pas di layar HP dan tidak terpotong. Selamat menikmati konten berkualitas dari Playtube!
+                </div>
+            </div>
         `;
+
+        document.getElementById('description-trigger').onclick = function() {
+            this.classList.toggle('expanded');
+        };
 
         // Inject suggested videos
         const suggested = document.getElementById('suggested-results');
@@ -1396,21 +1453,24 @@
         list.forEach(v => {
             const videoId = typeof v.id === 'string' ? v.id : v.id.videoId;
             const card = document.createElement('div');
-            card.className = 'card';
+            card.className = 'card suggested-card';
             card.style.flexDirection = 'row';
             card.style.padding = '8px 12px';
             card.style.gap = '12px';
             card.onclick = () => openVideo(videoId);
             card.innerHTML = `
-                <div class="thumbnail-container" style="width: 160px; height: 90px; margin-bottom: 0;">
+                <div class="thumbnail-container">
                     <img src="${v.snippet.thumbnails.high.url}" alt="">
                 </div>
                 <div class="video-info">
-                    <h3 class="video-title" style="font-size: 14px;">${v.snippet.title}</h3>
-                    <p class="channel-name" style="font-size: 12px;">${v.snippet.channelTitle}</p>
-                    <p class="video-meta" style="font-size: 12px;">${getRandomViews()} • ${getRandomTime()}</p>
+                    <h3 class="video-title" style="font-size: 14px;"></h3>
+                    <p class="channel-name" style="font-size: 12px;"></p>
+                    <p class="video-meta" style="font-size: 12px;"></p>
                 </div>
             `;
+            card.querySelector('.video-title').textContent = v.snippet.title;
+            card.querySelector('.channel-name').textContent = v.snippet.channelTitle;
+            card.querySelector('.video-meta').textContent = getRandomViews() + ' • ' + getRandomTime();
             suggested.appendChild(card);
         });
     }
