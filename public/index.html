@@ -826,16 +826,178 @@
 
         .video-player-container {
             width: 100%;
-            aspect-ratio: 16/9;
             background: black;
             position: sticky;
             top: 0;
             z-index: 5001;
             box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .video-player-wrapper {
+            width: 100%;
+            position: relative;
+            padding-bottom: 56.25%; /* 16:9 Aspect Ratio */
+            height: 0;
+        }
+
+        .video-player-wrapper.portrait {
+            padding-bottom: 177.77%; /* 9:16 Aspect Ratio */
+        }
+
+        .video-player-wrapper iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
         }
 
         .video-details-page {
             padding: 12px;
+        }
+
+        /* Comments Section */
+        .comments-preview {
+            background-color: var(--hover-bg);
+            padding: 12px;
+            border-radius: 12px;
+            margin-bottom: 16px;
+            cursor: pointer;
+        }
+
+        .comments-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .comment-count {
+            color: var(--text-secondary);
+            font-weight: normal;
+            font-size: 12px;
+        }
+
+        .user-comment-preview {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+        }
+
+        .user-comment-preview .avatar {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background-color: #555;
+        }
+
+        /* Comments Overlay */
+        #comments-overlay {
+            display: none;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 70%;
+            background-color: #0f0f0f;
+            z-index: 6000;
+            border-radius: 12px 12px 0 0;
+            flex-direction: column;
+            animation: slideInUp 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+            box-shadow: 0 -5px 20px rgba(0,0,0,0.5);
+        }
+
+        .comments-overlay-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .comments-list {
+            flex-grow: 1;
+            overflow-y: auto;
+            padding: 16px;
+        }
+
+        .comment-item {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .comment-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background-color: var(--primary-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+
+        .comment-body {
+            flex-grow: 1;
+        }
+
+        .comment-user {
+            font-size: 12px;
+            font-weight: 500;
+            margin-bottom: 2px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .comment-time {
+            color: var(--text-secondary);
+            font-weight: normal;
+        }
+
+        .comment-text {
+            font-size: 14px;
+            line-height: 1.4;
+        }
+
+        .comment-actions {
+            display: flex;
+            gap: 16px;
+            margin-top: 8px;
+            color: var(--text-secondary);
+            font-size: 12px;
+        }
+
+        .add-comment-bar {
+            padding: 8px 16px;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background-color: #0f0f0f;
+        }
+
+        .add-comment-input {
+            flex-grow: 1;
+            background-color: #1a1a1a;
+            border: none;
+            border-radius: 20px;
+            padding: 10px 16px;
+            color: white;
+            font-size: 14px;
+            outline: none;
+        }
+
+        .add-comment-input:focus {
+            background-color: #272727;
         }
 
         .video-details-page h2 {
@@ -1450,7 +1612,9 @@
         <button class="icon-btn close-player-btn" id="close-player">
             <svg height="24" viewBox="0 0 24 24" width="24" fill="white"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"></path></svg>
         </button>
-        <div id="player"></div>
+        <div class="video-player-wrapper" id="player-wrapper">
+            <div id="player"></div>
+        </div>
     </div>
     <div class="video-details-page" id="video-details-content">
         <!-- Details will be injected here -->
@@ -1500,6 +1664,25 @@
             <svg height="24" viewBox="0 0 24 24" width="24" fill="white"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14.5v-9l6 4.5-6 4.5z"></path></svg>
         </div>
         <span>Live</span>
+    </div>
+</div>
+
+<div id="comments-overlay">
+    <div class="comments-overlay-header">
+        <span style="font-weight: bold; font-size: 18px;">Komentar</span>
+        <button class="icon-btn" id="close-comments">
+            <svg height="24" viewBox="0 0 24 24" width="24" fill="white"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"></path></svg>
+        </button>
+    </div>
+    <div class="comments-list" id="comments-list">
+        <!-- Comments will be injected here -->
+    </div>
+    <div class="add-comment-bar">
+        <div class="user-avatar-small">P</div>
+        <input type="text" class="add-comment-input" id="new-comment-input" placeholder="Tambahkan komentar...">
+        <button class="icon-btn" id="send-comment-btn" style="color: var(--primary-color)">
+            <svg height="24" viewBox="0 0 24 24" width="24" fill="currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"></path></svg>
+        </button>
     </div>
 </div>
 
@@ -1629,7 +1812,7 @@
             card.className = 'card';
             card.onclick = () => {
                 addToHistory(video);
-                openVideo(videoId);
+                openVideo(videoId, video);
             };
 
             const initials = snippet.channelTitle.charAt(0).toUpperCase();
@@ -1672,15 +1855,26 @@
                 <span>Shorts</span>
             </div>
             <div class="shorts-grid">
-                ${[1,2,3,4,5].map(i => `
-                    <div class="short-card">
+                ${[1,2,3,4,5].map(i => {
+                    const shortVideo = {
+                        id: 'mock-short-' + i,
+                        snippet: {
+                            title: `Video Shorts Menarik ${i} #shorts`,
+                            channelTitle: 'Shorts Channel',
+                            thumbnails: { high: { url: `https://picsum.photos/seed/short${i}/200/350` } }
+                        }
+                    };
+                    return `
+                    <div class="short-card" onclick="openVideo('mock-short-${i}', ${JSON.stringify(shortVideo).replace(/"/g, '&quot;')}, true)">
                         <div class="short-thumbnail">
                             <img src="https://picsum.photos/seed/short${i}/200/350" alt="">
+                            <div style="position: absolute; bottom: 8px; left: 8px; color: white; font-size: 10px; font-weight: bold; background: rgba(0,0,0,0.6); padding: 2px 4px; border-radius: 2px;">SHORTS</div>
                         </div>
                         <div class="short-title">Video Shorts Menarik ${i} #shorts</div>
                         <div class="short-views">${Math.floor(Math.random()*100)+1} jt x ditonton</div>
                     </div>
-                `).join('')}
+                    `;
+                }).join('')}
             </div>
         `;
         container.appendChild(section);
@@ -1698,7 +1892,7 @@
 
     let currentVideoData = null;
 
-    async function openVideo(videoId, videoData) {
+    async function openVideo(videoId, videoData, isShort = false) {
         currentVideoData = videoData || {
             snippet: {
                 title: 'Video Playtube Menarik',
@@ -1707,6 +1901,14 @@
         };
 
         const player = document.getElementById('player');
+        const wrapper = document.getElementById('player-wrapper');
+
+        if (isShort) {
+            wrapper.classList.add('portrait');
+        } else {
+            wrapper.classList.remove('portrait');
+        }
+
         if (!player.querySelector('iframe') || !player.querySelector('iframe').src.includes(videoId)) {
             player.innerHTML = `<iframe src="https://www.youtube.com/embed/${videoId}?autoplay=1" allow="autoplay; fullscreen" allowfullscreen></iframe>`;
         }
@@ -1717,7 +1919,7 @@
         document.getElementById('ambient-glow').style.background = `radial-gradient(circle at center, ${randomColor} 0%, rgba(15, 15, 15, 0) 70%)`;
 
         // Ensure player is in modal
-        document.querySelector('.video-player-container').appendChild(player);
+        wrapper.appendChild(player);
 
         videoModal.style.display = 'flex';
         document.getElementById('mini-player').style.display = 'none';
@@ -1725,36 +1927,38 @@
 
         // Inject video info
         const content = document.getElementById('video-details-content');
+        const initials = currentVideoData.snippet.channelTitle.charAt(0).toUpperCase();
+
         content.innerHTML = `
-            <h2 style="font-size: 16px;">Video Playtube Menarik - Judul Video Berkualitas untuk Tampilan Mobile</h2>
-            <div class="meta">1.2 jt x ditonton • 2 jam yang lalu ...lebih banyak</div>
+            <h2 id="player-video-title" style="font-size: 16px;"></h2>
+            <div class="meta">${getRandomViews()} • ${getRandomTime()} ...lebih banyak</div>
 
             <div class="channel-info-bar">
-                <div class="channel-avatar">P</div>
+                <div class="channel-avatar">${initials}</div>
                 <div>
-                    <div style="font-weight: bold; font-size: 14px;">Playtube Channel</div>
-                    <div class="subs-count">1.5 jt subscriber</div>
+                    <div id="player-channel-name" style="font-weight: bold; font-size: 14px;"></div>
+                    <div class="subs-count">${Math.floor(Math.random() * 10) + 1} jt subscriber</div>
                 </div>
                 <button class="subscribe-btn">Subscribe</button>
             </div>
 
             <div class="actions-bar">
-                <div class="action-item">
+                <div class="action-item" onclick="toggleAction(this, 'liked')">
                     <svg height="20" viewBox="0 0 24 24" width="20" fill="white"><path d="M1 21h4V9H1v12zm22-11c0-1.1-.9-2-2-2h-6.31l.95-4.57.03-.32c0-.41-.17-.79-.44-1.06L14.17 1 7.59 7.59C7.22 7.95 7 8.45 7 9v10c0 1.1.9 2 2 2h9c.83 0 1.54-.5 1.84-1.22l3.02-7.05c.09-.23.14-.47.14-.73v-2z"></path></svg>
                     <span>12 rb</span>
                 </div>
-                <div class="action-item">
+                <div class="action-item" onclick="toggleAction(this, 'disliked')">
                     <svg height="20" viewBox="0 0 24 24" width="20" fill="white"><path d="M15 3H6c-.83 0-1.54.5-1.84 1.22l-3.02 7.05c-.09.23-.14.47-.14.73v2c0 1.1.9 2 2 2h6.31l-.95 4.57-.03.32c0 .41.17.79.44 1.06L9.83 23l6.59-6.59c.37-.36.58-.86.58-1.41V5c0-1.1-.9-2-2-2zm4 0v12h4V3h-4z"></path></svg>
                 </div>
-                <div class="action-item">
+                <div class="action-item" onclick="shareVideo('${videoId}')">
                     <svg height="20" viewBox="0 0 24 24" width="20" fill="white"><path d="M11.73 15.83L11 14l1.73-1.83L15 13l-3.27 2.83zM12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 14.5v-9l6 4.5-6 4.5z"></path></svg>
                     <span>Bagikan</span>
                 </div>
-                <div class="action-item">
+                <div class="action-item" onclick="showToast('Video didownload')">
                     <svg height="20" viewBox="0 0 24 24" width="20" fill="white"><path d="M17 18V5H7v13h10zm1-14c.55 0 1 .45 1 1v14c0 .55-.45 1-1 1H6c-.55 0-1-.45-1-1V5c0-.55.45-1 1-1h12zM8 7h3v2H8V7zm0 4h8v2H8v-2zm0 4h8v2H8v-2z"></path></svg>
                     <span>Download</span>
                 </div>
-                <div class="action-item">
+                <div class="action-item" onclick="showToast('Disimpan ke Koleksi')">
                     <svg height="20" viewBox="0 0 24 24" width="20" fill="white"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 11h-4v4h-2v-4H7v-2h4V7h2v4h4v2z"></path></svg>
                     <span>Simpan</span>
                 </div>
@@ -1762,14 +1966,30 @@
 
             <div class="description-box" id="description-trigger">
                 <div class="description-text">
-                    Deskripsi video yang sangat menarik dan mendetail akan muncul di bagian ini. User dapat membacanya lebih lengkap dengan mengetuk area ini. Kami memastikan bahwa semua konten pas di layar HP dan tidak terpotong. Selamat menikmati konten berkualitas dari Playtube!
+                    Deskripsi untuk video ini: ${currentVideoData.snippet.title}. Video ini memberikan wawasan baru tentang topik yang sedang hangat diperbincangkan. Pastikan untuk menonton sampai habis agar tidak ketinggalan informasi penting!
+                </div>
+            </div>
+
+            <div class="comments-preview" id="comments-preview-trigger">
+                <div class="comments-header">
+                    <span>Komentar</span>
+                    <span class="comment-count" id="preview-comment-count">12 rb</span>
+                </div>
+                <div class="user-comment-preview">
+                    <div class="avatar" id="preview-avatar"></div>
+                    <div id="preview-comment-text">Wah videonya keren banget, sangat informatif!</div>
                 </div>
             </div>
         `;
 
+        document.getElementById('player-video-title').textContent = currentVideoData.snippet.title;
+        document.getElementById('player-channel-name').textContent = currentVideoData.snippet.channelTitle;
+
         document.getElementById('description-trigger').onclick = function() {
             this.classList.toggle('expanded');
         };
+
+        document.getElementById('comments-preview-trigger').onclick = () => openComments(videoId);
 
         // Inject suggested videos
         const suggested = document.getElementById('suggested-results');
@@ -1820,6 +2040,7 @@
 
     closePlayer.onclick = () => {
         videoModal.style.display = 'none';
+        document.getElementById('comments-overlay').style.display = 'none';
         document.body.style.overflow = 'auto';
 
         const mini = document.getElementById('mini-player');
@@ -1844,7 +2065,8 @@
         const iframe = document.querySelector('#player iframe');
         if (iframe) {
             const videoId = iframe.src.split('/').pop().split('?')[0];
-            openVideo(videoId, currentVideoData);
+            const isShort = document.getElementById('player-wrapper').classList.contains('portrait');
+            openVideo(videoId, currentVideoData, isShort);
         }
     };
 
@@ -2207,6 +2429,115 @@
             }, 600);
         }
     });
+
+    // Comments Logic
+    function openComments(videoId) {
+        const overlay = document.getElementById('comments-overlay');
+        overlay.style.display = 'flex';
+        renderComments(videoId);
+    }
+
+    document.getElementById('close-comments').onclick = () => {
+        document.getElementById('comments-overlay').style.display = 'none';
+    };
+
+    function renderComments(videoId) {
+        const list = document.getElementById('comments-list');
+        const storageKey = 'comments_' + videoId;
+        const userComments = JSON.parse(localStorage.getItem(storageKey) || '[]');
+
+        const mockComments = [
+            { user: 'Andi Pratama', text: 'Keren banget bang tutorialnya!', time: '1 jam yang lalu' },
+            { user: 'Siti Aminah', text: 'Sangat membantu buat tugas kuliah saya.', time: '3 jam yang lalu' },
+            { user: 'Budi Santoso', text: 'Ditunggu part 2-nya ya bang.', time: '5 jam yang lalu' }
+        ];
+
+        const allComments = [...userComments.slice().reverse(), ...mockComments];
+
+        list.innerHTML = allComments.map(c => `
+            <div class="comment-item">
+                <div class="comment-avatar" style="background-color: ${stringToColor(c.user)}">${c.user.charAt(0)}</div>
+                <div class="comment-body">
+                    <div class="comment-user">${c.user} <span class="comment-time">${c.time}</span></div>
+                    <div class="comment-text">${c.text}</div>
+                    <div class="comment-actions">
+                        <span onclick="showToast('Suka komentar')">Suka</span>
+                        <span onclick="showToast('Balas komentar')">Balas</span>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+
+        // Update preview
+        if (allComments.length > 0) {
+            document.getElementById('preview-comment-text').textContent = allComments[0].text;
+            const previewAvatar = document.getElementById('preview-avatar');
+            previewAvatar.style.backgroundColor = stringToColor(allComments[0].user);
+            previewAvatar.textContent = allComments[0].user.charAt(0);
+            previewAvatar.style.display = 'flex';
+            previewAvatar.style.alignItems = 'center';
+            previewAvatar.style.justifyContent = 'center';
+            previewAvatar.style.color = 'white';
+            previewAvatar.style.fontWeight = 'bold';
+            previewAvatar.style.fontSize = '12px';
+            document.getElementById('preview-comment-count').textContent = (allComments.length + 12000).toLocaleString('id-ID');
+        }
+    }
+
+    function stringToColor(str) {
+        let hash = 0;
+        for (let i = 0; i < str.length; i++) {
+            hash = str.charCodeAt(i) + ((hash << 5) - hash);
+        }
+        const c = (hash & 0x00FFFFFF).toString(16).toUpperCase();
+        return "#" + "00000".substring(0, 6 - c.length) + c;
+    }
+
+    document.getElementById('send-comment-btn').onclick = () => {
+        const input = document.getElementById('new-comment-input');
+        const text = input.value;
+        if (!text) return;
+
+        const iframe = document.querySelector('#player iframe');
+        if (!iframe) return;
+        const videoId = iframe.src.split('/').pop().split('?')[0];
+        const storageKey = 'comments_' + videoId;
+        const userComments = JSON.parse(localStorage.getItem(storageKey) || '[]');
+
+        userComments.push({
+            user: 'Playtube User',
+            text: text,
+            time: 'Baru saja'
+        });
+
+        localStorage.setItem(storageKey, JSON.stringify(userComments));
+        input.value = '';
+        renderComments(videoId);
+        showToast('Komentar ditambahkan');
+    };
+
+    document.getElementById('new-comment-input').onkeypress = (e) => {
+        if (e.key === 'Enter') document.getElementById('send-comment-btn').click();
+    };
+
+    function toggleAction(el, type) {
+        el.classList.toggle('active');
+        if (el.classList.contains('active')) {
+            el.style.backgroundColor = 'var(--primary-color)';
+            el.style.color = 'white';
+            showToast(type === 'liked' ? 'Anda menyukai video ini' : 'Anda tidak menyukai video ini');
+        } else {
+            el.style.backgroundColor = 'var(--hover-bg)';
+            el.style.color = 'white';
+        }
+    }
+
+    function shareVideo(videoId) {
+        const url = 'https://playtube.com/v/' + videoId;
+        navigator.clipboard.writeText(url).then(() => {
+            showToast('Link disalin ke clipboard');
+        });
+    }
 
     // Initial load
     checkLogin();
