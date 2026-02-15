@@ -24,9 +24,22 @@ const sentinel = document.getElementById('sentinel');
 // State Management
 let searchHistory = JSON.parse(localStorage.getItem('playtube_history') || '[]');
 let currentUser = JSON.parse(localStorage.getItem('playtube_user') || 'null');
+let videoHistory = JSON.parse(localStorage.getItem('playtube_video_history') || '[]');
+let subscriptions = JSON.parse(localStorage.getItem('playtube_subs') || '[]');
+let localComments = JSON.parse(localStorage.getItem('playtube_comments') || '{}');
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
+    // Mobile Search Toggle
+    const mobileSearchBtn = document.getElementById('mobile-search-btn');
+    const mobileSearchBack = document.getElementById('mobile-search-back');
+    if (mobileSearchBtn) {
+        mobileSearchBtn.onclick = () => document.body.classList.add('mobile-search-active');
+    }
+    if (mobileSearchBack) {
+        mobileSearchBack.onclick = () => document.body.classList.remove('mobile-search-active');
+    }
+
     loadTrending();
     setupInfiniteScroll();
     setupRippleEffect();
@@ -250,9 +263,21 @@ function openVideo(video, fromPopState = false) {
     const time = video.time || '2 jam yang lalu';
     const channelId = video.channelId || 'channel_1';
 
+    const videoObj = typeof video === 'object' ? video : {
+        id: videoId, title, channel, views, time, channelId,
+        thumbnail: `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`
+    };
+
+    lastVideo = videoObj;
+
     if (!fromPopState) {
-        history.pushState({page: 'video', id: videoId, video: video}, '');
+        history.pushState({page: 'video', id: videoId, video: videoObj}, '');
     }
+
+    // Save to History
+    videoHistory = videoHistory.filter(v => v.id !== videoId);
+    videoHistory.unshift(videoObj);
+    localStorage.setItem('playtube_video_history', JSON.stringify(videoHistory.slice(0, 50)));
 
     videoModal.classList.add('active');
     toggleActive('mini-player', false);
@@ -263,6 +288,8 @@ function openVideo(video, fromPopState = false) {
     // Ambient Glow Effect
     const glow = document.getElementById('ambient-glow');
     glow.style.background = `radial-gradient(circle at center, ${stringToColor(channel)}66 0%, rgba(15, 15, 15, 0) 70%)`;
+
+    const isSubbed = subscriptions.some(s => s.id === channelId);
 
     // Inject Details
     const details = document.getElementById('video-details-content');
@@ -276,7 +303,10 @@ function openVideo(video, fromPopState = false) {
                 <div style="font-weight: bold;">${channel} <svg height="12" viewBox="0 0 24 24" width="12" fill="#aaa"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"></path></svg></div>
                 <div class="subs-count">${(Math.floor(Math.random()*20)+1)} jt subscriber</div>
             </div>
-            <button class="subscribe-btn" onclick="toggleSubscribe(this)">Subscribe</button>
+            <button class="subscribe-btn ${isSubbed ? 'active' : ''}"
+                    onclick="toggleSubscribe(this, '${channelId}', '${channel}')">
+                ${isSubbed ? 'Disubscribe' : 'Subscribe'}
+            </button>
         </div>
 
         <div class="actions-bar">
@@ -493,6 +523,18 @@ closeFilters.onclick = () => {
     toggleActive('sheet-overlay', false);
 };
 
+document.querySelectorAll('.filter-option').forEach(opt => {
+    opt.onclick = function() {
+        const parent = this.parentElement;
+        parent.querySelectorAll('.filter-option').forEach(o => o.classList.remove('active'));
+        this.classList.add('active');
+        showToast(`Filter diterapkan: ${this.innerText}`);
+        // In a real app, we would re-fetch with sort params
+        if (currentQuery) fetchVideos(currentQuery);
+        closeAllOverlays();
+    };
+});
+
 sheetOverlay.onclick = () => {
     closeAllOverlays();
 };
@@ -523,6 +565,14 @@ function openChannel(channelId, channelName, fromPopState = false) {
     document.getElementById('channel-avatar-large').style.backgroundColor = stringToColor(name);
     document.getElementById('channel-avatar-large').innerText = name.charAt(0);
     document.getElementById('channel-banner').style.background = `linear-gradient(135deg, ${stringToColor(name)} 0%, #333 100%)`;
+
+    const isSubbed = subscriptions.some(s => s.id === channelId);
+    const subBtn = document.getElementById('channel-subscribe-btn');
+    if (subBtn) {
+        subBtn.innerText = isSubbed ? 'Disubscribe' : 'Subscribe';
+        subBtn.className = `subscribe-btn ${isSubbed ? 'active' : ''}`;
+        subBtn.onclick = () => toggleSubscribe(subBtn, channelId, name);
+    }
 
     const videosContainer = document.getElementById('channel-videos');
     videosContainer.innerHTML = '<div class="loading">Memuat video channel...</div>';
@@ -608,21 +658,81 @@ document.getElementById('close-comments').onclick = () => {
     toggleActive('comments-overlay', false);
 };
 
+const sendCommentBtn = document.getElementById('send-comment-btn');
+const commentInput = document.getElementById('new-comment-input');
+
+if (sendCommentBtn) {
+    sendCommentBtn.onclick = () => submitComment();
+}
+
+if (commentInput) {
+    commentInput.onkeypress = (e) => {
+        if (e.key === 'Enter') submitComment();
+    };
+}
+
+function submitComment() {
+    const text = commentInput.value.trim();
+    if (!text || !lastVideo) return;
+
+    const videoId = typeof lastVideo === 'string' ? lastVideo : lastVideo.id;
+    if (!localComments[videoId]) localComments[videoId] = [];
+
+    const newComment = {
+        user: currentUser ? currentUser.name : 'Pengguna Playtube',
+        text: text,
+        time: 'Baru saja',
+        avatarColor: '#9d4edd'
+    };
+
+    localComments[videoId].unshift(newComment);
+    localStorage.setItem('playtube_comments', JSON.stringify(localComments));
+
+    commentInput.value = '';
+    renderComments();
+    updateCommentPreview();
+}
+
 function renderComments() {
     const list = document.getElementById('comments-list');
-    list.innerHTML = [1,2,3,4,5,6,7,8,9,10].map(i => `
+    if (!lastVideo) return;
+    const videoId = typeof lastVideo === 'string' ? lastVideo : lastVideo.id;
+
+    const videoComments = localComments[videoId] || [];
+    const mockComments = [1,2,3,4,5].map(i => ({
+        user: `user_${i}`,
+        text: 'Wah konten ini sangat bermanfaat bagi nusa dan bangsa. Lanjutkan!',
+        time: `${i} jam yang lalu`,
+        avatarColor: stringToColor('Commenter '+i)
+    }));
+
+    const allComments = [...videoComments, ...mockComments];
+
+    list.innerHTML = allComments.map(c => `
         <div class="comment-item">
-            <div class="comment-avatar" style="background-color: ${stringToColor('Commenter '+i)}">${String.fromCharCode(64+i)}</div>
+            <div class="comment-avatar" style="background-color: ${c.avatarColor}">${c.user.charAt(0)}</div>
             <div class="comment-body">
-                <div class="comment-user">@user_${i} <span class="comment-time">${i} jam yang lalu</span></div>
-                <div class="comment-text">Wah konten ini sangat bermanfaat bagi nusa dan bangsa. Lanjutkan!</div>
+                <div class="comment-user">@${c.user} <span class="comment-time">${c.time}</span></div>
+                <div class="comment-text">${c.text}</div>
                 <div class="comment-actions">
-                    <span><svg height="16" viewBox="0 0 24 24" width="16" fill="currentColor"><path d="M1 21h4V9H1v12zm22-11c0-1.1-.9-2-2-2h-6.31l.95-4.57.03-.32c0-.41-.17-.79-.44-1.06L14.17 1 7.59 7.59C7.22 7.95 7 8.45 7 9v10c0 1.1.9 2 2 2h9c.83 0 1.54-.5 1.84-1.22l3.02-7.05c.09-.23.14-.47.14-.73v-2z"></path></svg> 12</span>
+                    <span><svg height="16" viewBox="0 0 24 24" width="16" fill="currentColor"><path d="M1 21h4V9H1v12zm22-11c0-1.1-.9-2-2-2h-6.31l.95-4.57.03-.32c0-.41-.17-.79-.44-1.06L14.17 1 7.59 7.59C7.22 7.95 7 8.45 7 9v10c0 1.1.9 2 2 2h9c.83 0 1.54-.5 1.84-1.22l3.02-7.05c.09-.23.14-.47.14-.73v-2z"></path></svg></span>
                     <span>Balas</span>
                 </div>
             </div>
         </div>
     `).join('');
+}
+
+function updateCommentPreview() {
+    if (!lastVideo) return;
+    const videoId = typeof lastVideo === 'string' ? lastVideo : lastVideo.id;
+    const videoComments = localComments[videoId] || [];
+    if (videoComments.length > 0) {
+        const previewText = document.querySelector('.user-comment-preview div[style*="flex-grow: 1"]');
+        if (previewText) {
+            previewText.innerText = videoComments[0].text;
+        }
+    }
 }
 
 // Login Simulation
@@ -795,17 +905,20 @@ function stringToColor(str) {
     return color;
 }
 
-function toggleSubscribe(btn) {
-    if (btn.innerText === 'Subscribe') {
+function toggleSubscribe(btn, channelId, channelName) {
+    const index = subscriptions.findIndex(s => s.id === channelId);
+
+    if (index === -1) {
+        subscriptions.push({id: channelId, name: channelName});
         btn.innerText = 'Disubscribe';
-        btn.style.backgroundColor = '#3f3f3f';
-        btn.style.color = 'white';
+        btn.classList.add('active');
         showToast('Ditambahkan ke subscription');
     } else {
+        subscriptions.splice(index, 1);
         btn.innerText = 'Subscribe';
-        btn.style.backgroundColor = 'white';
-        btn.style.color = 'black';
+        btn.classList.remove('active');
     }
+    localStorage.setItem('playtube_subs', JSON.stringify(subscriptions));
 }
 
 function toggleAction(btn) {
@@ -826,54 +939,97 @@ async function fetchVideosByChannel(channelId) {
 
 function loadHistory() {
     currentCategory = 'history';
-    resultsGrid.innerHTML = `
-        <div class="anda-section">
-            <div class="anda-section-header">Riwayat</div>
-            <div class="grid">
-                ${generateMockVideos('history', 6).map(v => `
-                    <div class="card" onclick="openVideo('${v.id}')">
-                        <div class="thumbnail-container"><img src="${v.thumbnail}"></div>
-                        <div class="video-details">
-                            <div class="video-info">
-                                <h3 class="video-title">${v.title}</h3>
-                                <p class="video-meta">${v.views} x ditonton</p>
-                            </div>
-                        </div>
-                    </div>
-                `).join('')}
-            </div>
+    const displayHistory = videoHistory.length > 0 ? videoHistory : generateMockVideos('history', 6);
+
+    resultsGrid.innerHTML = '';
+    const section = document.createElement('div');
+    section.className = 'anda-section';
+    section.innerHTML = `
+        <div class="anda-section-header">
+            Riwayat
+            ${videoHistory.length > 0 ? '<button class="chip" onclick="clearHistory()">Hapus Semua</button>' : ''}
         </div>
     `;
+
+    const grid = document.createElement('div');
+    grid.className = 'grid';
+
+    displayHistory.forEach(v => {
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.innerHTML = `
+            <div class="thumbnail-container"><img src="${v.thumbnail}"></div>
+            <div class="video-details">
+                <div class="video-info">
+                    <h3 class="video-title">${v.title}</h3>
+                    <p class="video-meta">${v.views} x ditonton • ${v.channel}</p>
+                </div>
+            </div>
+        `;
+        card.onclick = () => openVideo(v);
+        grid.appendChild(card);
+    });
+
+    section.appendChild(grid);
+    resultsGrid.appendChild(section);
+}
+
+function clearHistory() {
+    videoHistory = [];
+    localStorage.removeItem('playtube_video_history');
+    loadHistory();
+    showToast('Riwayat dihapus');
 }
 
 function loadAnda() {
+    const name = currentUser ? currentUser.name : 'Pengguna Playtube';
+    const email = currentUser ? currentUser.email : '@pengguna_playtube';
+    const displayHistory = videoHistory.slice(0, 10);
+
     resultsGrid.innerHTML = `
         <div class="anda-header">
-            <div class="anda-avatar">P</div>
+            <div class="anda-avatar" style="background-color: #9d4edd">${name.charAt(0)}</div>
             <div class="anda-info">
-                <h2>Pengguna Playtube</h2>
-                <p>@pengguna_playtube • Lihat channel</p>
+                <h2>${name}</h2>
+                <p>${email} • Lihat channel</p>
             </div>
         </div>
-        <div class="anda-section">
+        <div class="anda-section" id="anda-riwayat-section">
             <div class="anda-section-header">
                 <span>Riwayat</span>
                 <button class="chip" onclick="loadHistory()">Lihat semua</button>
             </div>
-            <div class="anda-history-list">
-                ${generateMockVideos('history', 5).map(v => `
-                    <div class="anda-history-item" onclick="openVideo('${v.id}')">
-                        <div class="anda-history-thumb"><img src="${v.thumbnail}"></div>
-                        <div class="anda-history-title">${v.title}</div>
-                    </div>
-                `).join('')}
+            <div class="anda-history-list" id="anda-history-list">
             </div>
         </div>
         <div class="sidebar-section">
             <div class="anda-menu-item"><svg height="24" viewBox="0 0 24 24" width="24" fill="white"><path d="M10 18v-6l5 3-5 3zm7-15H7v1h10V3zm3 3H4v1h16V6zm2 3H2v12h20V9zM3 10h18v10H3V10z"></path></svg> Video Anda</div>
             <div class="anda-menu-item"><svg height="24" viewBox="0 0 24 24" width="24" fill="white"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"></path></svg> Hasil download</div>
+            <div class="anda-menu-item" onclick="logout()"><svg height="24" viewBox="0 0 24 24" width="24" fill="white"><path d="M20 3v18H8v-1h11V4H8V3h12zm-3 8.5l-4-4v3H2v2h11v3l4-4z"></path></svg> Logout</div>
         </div>
     `;
+
+    const list = document.getElementById('anda-history-list');
+    if (displayHistory.length > 0) {
+        displayHistory.forEach(v => {
+            const item = document.createElement('div');
+            item.className = 'anda-history-item';
+            item.innerHTML = `
+                <div class="anda-history-thumb"><img src="${v.thumbnail}"></div>
+                <div class="anda-history-title">${v.title}</div>
+            `;
+            item.onclick = () => openVideo(v);
+            list.appendChild(item);
+        });
+    } else {
+        list.innerHTML = '<p style="padding: 10px; color: #aaa;">Belum ada riwayat tontonan</p>';
+    }
+}
+
+function logout() {
+    currentUser = null;
+    localStorage.removeItem('playtube_user');
+    location.reload();
 }
 
 function loadTrending() {
