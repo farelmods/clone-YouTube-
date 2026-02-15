@@ -110,7 +110,7 @@
             border-radius: 12px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.5);
             z-index: 2000;
-            padding: 8px 0;
+            padding: 8px;
             border: 1px solid var(--border-color);
         }
 
@@ -407,8 +407,47 @@
         .thumbnail-container img {
             width: 100%;
             height: 100%;
-            object-fit: contain; /* Changed to contain to avoid cropping important parts, with black background */
+            object-fit: cover;
             object-position: center;
+        }
+
+        /* Search Results horizontal layout */
+        .card.horizontal {
+            flex-direction: row !important;
+            gap: 12px;
+            padding: 8px 12px;
+        }
+
+        .card.horizontal .thumbnail-container {
+            width: 160px;
+            min-width: 160px;
+            margin-bottom: 0;
+            border-radius: 8px;
+        }
+
+        @media (min-width: 1000px) {
+            .card.horizontal .thumbnail-container {
+                width: 360px;
+                min-width: 360px;
+            }
+            .card.horizontal .video-title {
+                font-size: 18px;
+            }
+        }
+
+        .card.horizontal .video-details {
+            padding: 0;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .card.horizontal .channel-avatar {
+            display: none;
+        }
+
+        .card.horizontal .video-title {
+            font-size: 14px;
+            -webkit-line-clamp: 2;
         }
 
         /* Fluid suggested thumbnails for mobile */
@@ -515,7 +554,7 @@
             width: 80px;
             height: 80px;
             border-radius: 50%;
-            background-color: #ff5722;
+            background-color: var(--primary-color);
             color: white;
             font-size: 32px;
             display: flex;
@@ -549,20 +588,29 @@
         }
 
         .anda-history-list {
-            display: flex;
-            overflow-x: auto;
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
             padding: 0 16px;
             gap: 12px;
-            scrollbar-width: none;
         }
 
-        .anda-history-list::-webkit-scrollbar {
-            display: none;
+        @media (min-width: 601px) {
+            .anda-history-list {
+                display: flex;
+                overflow-x: auto;
+                scrollbar-width: none;
+            }
+            .anda-history-list::-webkit-scrollbar {
+                display: none;
+            }
+            .anda-history-item {
+                min-width: 160px;
+                width: 160px;
+            }
         }
 
         .anda-history-item {
-            min-width: 160px;
-            width: 160px;
+            width: 100%;
         }
 
         .anda-history-thumb {
@@ -598,7 +646,7 @@
         .user-avatar-small {
             width: 24px;
             height: 24px;
-            background-color: #ff5722;
+            background-color: var(--primary-color);
             border-radius: 50%;
             display: flex;
             align-items: center;
@@ -1064,6 +1112,15 @@
 
         .action-item:active {
             background-color: var(--active-bg);
+        }
+
+        .action-item.active {
+            background-color: rgba(157, 78, 221, 0.1) !important;
+            color: var(--primary-color) !important;
+        }
+
+        .action-item.active svg {
+            fill: var(--primary-color) !important;
         }
 
         .suggested-section {
@@ -1715,7 +1772,7 @@
     const closePlayer = document.getElementById('close-player');
     const playerContainer = document.getElementById('player');
 
-    async function fetchVideos(url) {
+    async function fetchVideos(url, layout = 'vertical') {
         resultsGrid.innerHTML = '';
         resultsGrid.style.animation = 'none';
         resultsGrid.offsetHeight; // trigger reflow
@@ -1725,13 +1782,13 @@
             const res = await fetch(url);
             const data = await res.json();
             if (data.items && data.items.length > 0) {
-                renderVideos(data.items);
+                renderVideos(data.items, layout);
             } else {
-                renderMockVideos();
+                renderMockVideos(layout);
             }
         } catch (error) {
             console.error(error);
-            renderMockVideos();
+            renderMockVideos(layout);
         }
     }
 
@@ -1754,7 +1811,7 @@
         }
     }
 
-    function renderMockVideos() {
+    function renderMockVideos(layout = 'vertical') {
         const mockItems = [];
         for (let i = 1; i <= 8; i++) {
             mockItems.push({
@@ -1766,7 +1823,7 @@
                 }
             });
         }
-        renderVideos(mockItems);
+        renderVideos(mockItems, layout);
     }
 
     // History logic
@@ -1791,7 +1848,7 @@
         }
     }
 
-    function renderVideos(items) {
+    function renderVideos(items, layout = 'vertical') {
         resultsGrid.innerHTML = '';
         if (!items || items.length === 0) {
             resultsGrid.innerHTML = '<div class="loading">Tidak ada hasil.</div>';
@@ -1809,7 +1866,7 @@
             }
 
             const card = document.createElement('div');
-            card.className = 'card';
+            card.className = `card ${layout === 'horizontal' ? 'horizontal' : ''}`;
             card.onclick = () => {
                 addToHistory(video);
                 openVideo(videoId, video);
@@ -1939,7 +1996,7 @@
                     <div id="player-channel-name" style="font-weight: bold; font-size: 14px;"></div>
                     <div class="subs-count">${Math.floor(Math.random() * 10) + 1} jt subscriber</div>
                 </div>
-                <button class="subscribe-btn">Subscribe</button>
+                <button class="subscribe-btn" id="subscribe-btn-player">Subscribe</button>
             </div>
 
             <div class="actions-bar">
@@ -1983,7 +2040,12 @@
         `;
 
         document.getElementById('player-video-title').textContent = currentVideoData.snippet.title;
-        document.getElementById('player-channel-name').textContent = currentVideoData.snippet.channelTitle;
+        const channelName = currentVideoData.snippet.channelTitle;
+        document.getElementById('player-channel-name').textContent = channelName;
+
+        const subBtn = document.getElementById('subscribe-btn-player');
+        updateSubscribeButton(subBtn, channelName);
+        subBtn.onclick = () => toggleSubscribe(subBtn, channelName);
 
         document.getElementById('description-trigger').onclick = function() {
             this.classList.toggle('expanded');
@@ -2091,7 +2153,7 @@
 
     function loadSearch(q) {
         setActiveSidebar(null, null, q);
-        fetchVideos(`/api/search?q=${encodeURIComponent(q)}`);
+        fetchVideos(`/api/search?q=${encodeURIComponent(q)}`, 'horizontal');
     }
 
     function loadAnda() {
@@ -2523,12 +2585,10 @@
     function toggleAction(el, type) {
         el.classList.toggle('active');
         if (el.classList.contains('active')) {
-            el.style.backgroundColor = 'var(--primary-color)';
-            el.style.color = 'white';
+            // CSS handles the color change via .active class
             showToast(type === 'liked' ? 'Anda menyukai video ini' : 'Anda tidak menyukai video ini');
         } else {
-            el.style.backgroundColor = 'var(--hover-bg)';
-            el.style.color = 'white';
+            // CSS handles return to default
         }
     }
 
@@ -2537,6 +2597,37 @@
         navigator.clipboard.writeText(url).then(() => {
             showToast('Link disalin ke clipboard');
         });
+    }
+
+    function toggleSubscribe(btn, channelName) {
+        let subs = JSON.parse(localStorage.getItem('playtube_subscriptions') || '[]');
+        const isSubbed = subs.includes(channelName);
+
+        if (isSubbed) {
+            subs = subs.filter(c => c !== channelName);
+            showToast('Berhenti subscribe ' + channelName);
+        } else {
+            subs.push(channelName);
+            showToast('Disubscribe: ' + channelName);
+        }
+
+        localStorage.setItem('playtube_subscriptions', JSON.stringify(subs));
+        updateSubscribeButton(btn, channelName);
+    }
+
+    function updateSubscribeButton(btn, channelName) {
+        const subs = JSON.parse(localStorage.getItem('playtube_subscriptions') || '[]');
+        const isSubbed = subs.includes(channelName);
+
+        if (isSubbed) {
+            btn.textContent = 'Disubscribe';
+            btn.style.backgroundColor = 'var(--hover-bg)';
+            btn.style.color = 'var(--text-secondary)';
+        } else {
+            btn.textContent = 'Subscribe';
+            btn.style.backgroundColor = 'white';
+            btn.style.color = 'black';
+        }
     }
 
     // Initial load
