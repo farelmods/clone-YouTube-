@@ -48,6 +48,7 @@
             height: 56px;
             z-index: 1000;
             border-bottom: 1px solid var(--border-color);
+            transition: transform 0.3s ease-in-out;
         }
 
         .header-left {
@@ -126,6 +127,70 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            position: relative;
+            overflow: hidden;
+            border-radius: 50%;
+        }
+
+        /* Ripple Effect */
+        .ripple {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            transform: scale(0);
+            animation: ripple-animation 0.6s linear;
+            pointer-events: none;
+        }
+
+        @keyframes ripple-animation {
+            to {
+                transform: scale(4);
+                opacity: 0;
+            }
+        }
+
+        .ripple-container {
+            position: relative !important;
+            overflow: hidden !important;
+        }
+
+        /* Skeleton Animation */
+        .skeleton {
+            background: linear-gradient(90deg, #1a1a1a 25%, #272727 50%, #1a1a1a 75%);
+            background-size: 200% 100%;
+            animation: skeleton-loading 1.5s infinite;
+        }
+
+        @keyframes skeleton-loading {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
+        .skeleton-thumb {
+            width: 100%;
+            aspect-ratio: 16/9;
+            border-radius: 12px;
+            margin-bottom: 12px;
+        }
+
+        .skeleton-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .skeleton-text {
+            height: 14px;
+            border-radius: 4px;
+            margin-bottom: 8px;
+        }
+
+        .skeleton-title { width: 80%; height: 18px; }
+        .skeleton-meta { width: 60%; }
+
+        @media (max-width: 600px) {
+            .skeleton-thumb { border-radius: 0; }
         }
 
         .search-btn:hover {
@@ -270,7 +335,7 @@
 
         /* Main Content */
         main {
-            margin-top: 56px;
+            margin-top: 104px;
             margin-left: 240px;
             padding: 24px;
         }
@@ -793,6 +858,75 @@
             padding-top: 12px;
         }
 
+        /* Mini Player */
+        #mini-player {
+            display: none;
+            position: fixed;
+            bottom: 56px;
+            left: 0;
+            right: 0;
+            height: 64px;
+            background-color: #212121;
+            z-index: 1500;
+            align-items: center;
+            padding: 0 12px;
+            border-bottom: 1px solid var(--border-color);
+            border-top: 1px solid var(--border-color);
+            gap: 12px;
+            animation: slideInUp 0.3s ease-out;
+            cursor: pointer;
+        }
+
+        .mini-player-thumb {
+            width: 90px;
+            aspect-ratio: 16/9;
+            background: black;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .mini-player-thumb iframe {
+            width: 100%;
+            height: 100%;
+            pointer-events: none; /* Prevent interaction in mini player thumb */
+        }
+
+        .mini-player-info {
+            flex-grow: 1;
+            font-size: 14px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .mini-player-title {
+            font-weight: 500;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .mini-player-channel {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .mini-player-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        @media (min-width: 601px) {
+            #mini-player {
+                bottom: 0;
+                left: 240px;
+            }
+        }
+        @media (max-width: 1000px) and (min-width: 601px) {
+            #mini-player {
+                left: 72px;
+            }
+        }
+
         /* Collapsible Description */
         .description-box {
             background-color: var(--hover-bg);
@@ -895,6 +1029,46 @@
             cursor: pointer;
         }
 
+        /* Categories Bar */
+        .categories-bar {
+            position: fixed;
+            top: 56px;
+            left: 240px;
+            right: 0;
+            height: 48px;
+            background-color: var(--header-bg);
+            display: flex;
+            align-items: center;
+            padding: 0 12px;
+            gap: 12px;
+            overflow-x: auto;
+            z-index: 800;
+            scrollbar-width: none;
+            border-bottom: 1px solid var(--border-color);
+            transition: top 0.3s ease-in-out;
+        }
+
+        .categories-bar::-webkit-scrollbar {
+            display: none;
+        }
+
+        .chip {
+            background-color: var(--hover-bg);
+            color: var(--text-color);
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 14px;
+            white-space: nowrap;
+            cursor: pointer;
+            border: 1px solid transparent;
+            transition: background 0.2s;
+        }
+
+        .chip.active {
+            background-color: white;
+            color: black;
+        }
+
         @media (max-width: 1000px) {
             aside {
                 width: 72px;
@@ -912,6 +1086,9 @@
             }
             main {
                 margin-left: 72px;
+            }
+            .categories-bar {
+                left: 72px;
             }
         }
 
@@ -959,6 +1136,39 @@
             fill: var(--primary-color);
         }
 
+        /* Toast Notification */
+        #toast {
+            visibility: hidden;
+            min-width: 200px;
+            background-color: #333;
+            color: #fff;
+            text-align: center;
+            border-radius: 4px;
+            padding: 12px;
+            position: fixed;
+            z-index: 6000;
+            left: 50%;
+            bottom: 80px;
+            transform: translateX(-50%);
+            font-size: 14px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+        }
+
+        #toast.show {
+            visibility: visible;
+            animation: fadein 0.5s, fadeout 0.5s 2.5s;
+        }
+
+        @keyframes fadein {
+            from {bottom: 50px; opacity: 0;}
+            to {bottom: 80px; opacity: 1;}
+        }
+
+        @keyframes fadeout {
+            from {bottom: 80px; opacity: 1;}
+            to {bottom: 50px; opacity: 0;}
+        }
+
         @media (max-width: 600px) {
             .mobile-only {
                 display: flex;
@@ -976,9 +1186,13 @@
                 display: none;
             }
             main {
+                margin-top: 104px;
                 margin-left: 0;
                 padding: 0;
                 margin-bottom: 56px;
+            }
+            .categories-bar {
+                left: 0;
             }
             .bottom-nav {
                 display: flex;
@@ -998,6 +1212,12 @@
             }
             .video-details {
                 padding: 0 12px;
+            }
+            .video-title {
+                font-size: 14px;
+            }
+            .channel-name, .video-meta {
+                font-size: 12px;
             }
             .header-right {
                 display: flex;
@@ -1065,6 +1285,17 @@
         </button>
     </div>
 </header>
+
+<div class="categories-bar" id="categories-bar">
+    <div class="chip active" onclick="selectChip(this, 'trending')">Semua</div>
+    <div class="chip" onclick="selectChip(this, 'musik')">Musik</div>
+    <div class="chip" onclick="selectChip(this, 'game')">Game</div>
+    <div class="chip" onclick="selectChip(this, 'berita')">Berita</div>
+    <div class="chip" onclick="selectChip(this, 'live')">Live</div>
+    <div class="chip" onclick="selectChip(this, 'animasi')">Animasi</div>
+    <div class="chip" onclick="selectChip(this, 'teknologi')">Teknologi</div>
+    <div class="chip" onclick="selectChip(this, 'baru')">Baru diunggah</div>
+</div>
 
 <nav class="bottom-nav">
     <div class="nav-item active" onclick="loadTrending()">
@@ -1144,6 +1375,22 @@
     </div>
 </main>
 
+<div id="mini-player">
+    <div class="mini-player-thumb" id="mini-thumb"></div>
+    <div class="mini-player-info">
+        <div class="mini-player-title" id="mini-title">Judul Video</div>
+        <div class="mini-player-channel" id="mini-channel">Nama Channel</div>
+    </div>
+    <div class="mini-player-actions">
+        <button class="icon-btn" id="mini-play-pause">
+            <svg height="24" viewBox="0 0 24 24" width="24" fill="white"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"></path></svg>
+        </button>
+        <button class="icon-btn" id="mini-close">
+            <svg height="24" viewBox="0 0 24 24" width="24" fill="white"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"></path></svg>
+        </button>
+    </div>
+</div>
+
 <div id="video-modal">
     <div class="video-player-container">
         <button class="icon-btn close-player-btn" id="close-player">
@@ -1202,6 +1449,8 @@
     </div>
 </div>
 
+<div id="toast">Pesan muncul di sini</div>
+
 <div id="login-modal" class="modal">
     <div class="login-card">
         <button class="close-btn" id="close-login">&times;</button>
@@ -1234,7 +1483,7 @@
         resultsGrid.style.animation = 'none';
         resultsGrid.offsetHeight; // trigger reflow
         resultsGrid.style.animation = null;
-        resultsGrid.innerHTML = '<div class="loading">Memuat video...</div>';
+        renderSkeletons();
         try {
             const res = await fetch(url);
             const data = await res.json();
@@ -1246,6 +1495,25 @@
         } catch (error) {
             console.error(error);
             renderMockVideos();
+        }
+    }
+
+    function renderSkeletons() {
+        resultsGrid.innerHTML = '';
+        for (let i = 0; i < 8; i++) {
+            const skeleton = document.createElement('div');
+            skeleton.className = 'card';
+            skeleton.innerHTML = `
+                <div class="skeleton skeleton-thumb"></div>
+                <div class="video-details" style="padding: 0 12px;">
+                    <div class="skeleton skeleton-avatar"></div>
+                    <div class="video-info">
+                        <div class="skeleton skeleton-text skeleton-title"></div>
+                        <div class="skeleton skeleton-text skeleton-meta"></div>
+                    </div>
+                </div>
+            `;
+            resultsGrid.appendChild(skeleton);
         }
     }
 
@@ -1374,10 +1642,26 @@
         return times[Math.floor(Math.random() * times.length)];
     }
 
-    async function openVideo(videoId) {
-        // Fetch specific video details if possible, or use current context
-        playerContainer.innerHTML = `<iframe src="https://www.youtube.com/embed/${videoId}?autoplay=1" allow="autoplay; fullscreen" allowfullscreen></iframe>`;
+    let currentVideoData = null;
+
+    async function openVideo(videoId, videoData) {
+        currentVideoData = videoData || {
+            snippet: {
+                title: 'Video Playtube Menarik',
+                channelTitle: 'Playtube Channel'
+            }
+        };
+
+        const player = document.getElementById('player');
+        if (!player.querySelector('iframe') || !player.querySelector('iframe').src.includes(videoId)) {
+            player.innerHTML = `<iframe src="https://www.youtube.com/embed/${videoId}?autoplay=1" allow="autoplay; fullscreen" allowfullscreen></iframe>`;
+        }
+
+        // Ensure player is in modal
+        document.querySelector('.video-player-container').appendChild(player);
+
         videoModal.style.display = 'flex';
+        document.getElementById('mini-player').style.display = 'none';
         document.body.style.overflow = 'hidden';
 
         // Inject video info
@@ -1477,15 +1761,37 @@
 
     closePlayer.onclick = () => {
         videoModal.style.display = 'none';
-        playerContainer.innerHTML = '';
         document.body.style.overflow = 'auto';
+
+        const mini = document.getElementById('mini-player');
+        mini.style.display = 'flex';
+        document.getElementById('mini-title').textContent = currentVideoData.snippet.title;
+        document.getElementById('mini-channel').textContent = currentVideoData.snippet.channelTitle;
+
+        // Move player to mini thumb
+        document.getElementById('mini-thumb').appendChild(document.getElementById('player'));
+    };
+
+    document.getElementById('mini-player').onclick = (e) => {
+        if (e.target.closest('#mini-close')) {
+            document.getElementById('mini-player').style.display = 'none';
+            document.getElementById('player').innerHTML = '';
+            return;
+        }
+        if (e.target.closest('#mini-play-pause')) {
+            return;
+        }
+        // Re-open
+        const iframe = document.querySelector('#player iframe');
+        if (iframe) {
+            const videoId = iframe.src.split('/').pop().split('?')[0];
+            openVideo(videoId, currentVideoData);
+        }
     };
 
     window.onclick = (event) => {
         if (event.target == videoModal) {
-            videoModal.style.display = 'none';
-            playerContainer.innerHTML = '';
-            document.body.style.overflow = 'auto';
+            closePlayer.onclick();
         }
         if (event.target == loginModal) {
             loginModal.style.display = 'none';
@@ -1700,6 +2006,65 @@
             document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
             item.classList.add('active');
         });
+    });
+
+    function selectChip(el, category) {
+        document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+        el.classList.add('active');
+        if (category === 'trending') loadTrending();
+        else loadSearch(category);
+        showToast("Memuat kategori: " + el.textContent);
+    }
+
+    // Header Auto-hide on Scroll
+    let lastScrollY = window.scrollY;
+    const headerEl = document.querySelector('header');
+    const categoriesBar = document.getElementById('categories-bar');
+
+    window.addEventListener('scroll', () => {
+        if (window.innerWidth > 600) return;
+
+        if (window.scrollY > lastScrollY && window.scrollY > 100) {
+            headerEl.style.transform = 'translateY(-100%)';
+            categoriesBar.style.top = '0';
+        } else {
+            headerEl.style.transform = 'translateY(0)';
+            categoriesBar.style.top = '56px';
+        }
+        lastScrollY = window.scrollY;
+    });
+
+    function showToast(message) {
+        const toast = document.getElementById('toast');
+        toast.textContent = message;
+        toast.className = 'show';
+        setTimeout(() => { toast.className = toast.className.replace('show', ''); }, 3000);
+    }
+
+    // Ripple Effect Logic
+    document.addEventListener('click', function(e) {
+        const target = e.target.closest('.nav-item, .card, .action-item, .chip, .sheet-item, .sidebar-item, .icon-btn, .login-btn, .subscribe-btn, .signin-btn');
+        if (target) {
+            const rect = target.getBoundingClientRect();
+            const diameter = Math.max(target.clientWidth, target.clientHeight);
+            const radius = diameter / 2;
+
+            const circle = document.createElement("span");
+            circle.style.width = circle.style.height = `${diameter}px`;
+            circle.style.left = `${e.clientX - rect.left - radius}px`;
+            circle.style.top = `${e.clientY - rect.top - radius}px`;
+            circle.classList.add("ripple");
+
+            target.classList.add('ripple-container');
+            const oldRipple = target.querySelector('.ripple');
+            if (oldRipple) oldRipple.remove();
+
+            target.appendChild(circle);
+
+            setTimeout(() => {
+                if (circle.parentElement) circle.remove();
+            }, 600);
+        }
     });
 
     // Initial load
