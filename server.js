@@ -15,6 +15,7 @@ const YOUTUBE_API_BASE = "https://www.googleapis.com/youtube/v3";
 
 app.get("/api/search", async (req, res) => {
   const query = req.query.q;
+  const pageToken = req.query.pageToken;
 
   if (!query) {
     return res.json({ error: "Query kosong" });
@@ -27,6 +28,7 @@ app.get("/api/search", async (req, res) => {
         q: query,
         type: "video",
         maxResults: 12,
+        pageToken: pageToken,
         key: API_KEY
       }
     });
@@ -39,6 +41,7 @@ app.get("/api/search", async (req, res) => {
 });
 
 app.get("/api/trending", async (req, res) => {
+  const pageToken = req.query.pageToken;
   try {
     const response = await axios.get(`${YOUTUBE_API_BASE}/videos`, {
       params: {
@@ -46,13 +49,11 @@ app.get("/api/trending", async (req, res) => {
         chart: "mostPopular",
         regionCode: "ID",
         maxResults: 12,
+        pageToken: pageToken,
         key: API_KEY
       }
     });
 
-    // Normalize format to match search results if needed, but search result structure is different
-    // For convenience, I'll return the items directly.
-    // Note: trending returns video objects (id is string), search returns search objects (id is object {videoId: ...})
     res.json(response.data);
   } catch (err) {
     console.error(err.response?.data || err.message);
@@ -62,6 +63,7 @@ app.get("/api/trending", async (req, res) => {
 
 app.get("/api/category", async (req, res) => {
   const categoryId = req.query.id;
+  const pageToken = req.query.pageToken;
   if (!categoryId) return res.json({ error: "Category ID kosong" });
 
   try {
@@ -72,6 +74,7 @@ app.get("/api/category", async (req, res) => {
         videoCategoryId: categoryId,
         regionCode: "ID",
         maxResults: 12,
+        pageToken: pageToken,
         key: API_KEY
       }
     });
