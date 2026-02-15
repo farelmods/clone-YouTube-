@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,10 +9,17 @@
         :root {
             --primary-color: #7b2cbf;
             --primary-hover: #9d4edd;
-            --bg-color: #0f0f0f;
-            --surface-color: #1e1e1e;
-            --text-color: #ffffff;
-            --text-secondary: #aaaaaa;
+            --bg-color: #f9f9f9;
+            --sidebar-bg: #ffffff;
+            --text-color: #030303;
+            --text-secondary: #606060;
+            --border-color: #e5e5e5;
+            --hover-bg: #f2f2f2;
+            --active-bg: #e5e5e5;
+        }
+
+        * {
+            box-sizing: border-box;
         }
 
         body {
@@ -21,118 +28,282 @@
             font-family: 'Roboto', Arial, sans-serif;
             margin: 0;
             padding: 0;
+            overflow-x: hidden;
         }
 
+        /* Header */
         header {
-            background-color: var(--bg-color);
-            padding: 10px 20px;
+            background-color: white;
+            padding: 0 16px;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            position: sticky;
+            position: fixed;
             top: 0;
-            z-index: 100;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+            left: 0;
+            right: 0;
+            height: 56px;
+            z-index: 1000;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .menu-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 50%;
+        }
+
+        .menu-btn:hover {
+            background-color: var(--hover-bg);
         }
 
         .logo {
             display: flex;
             align-items: center;
-            font-size: 24px;
+            font-size: 20px;
             font-weight: bold;
             color: var(--primary-color);
             text-decoration: none;
+            gap: 4px;
         }
 
         .logo span {
-            color: white;
-            margin-left: 5px;
+            color: var(--text-color);
+            letter-spacing: -1px;
         }
 
-        .search-container {
+        .header-center {
             display: flex;
+            align-items: center;
             flex-grow: 1;
             justify-content: center;
-            max-width: 600px;
-            margin: 0 20px;
+            max-width: 720px;
+            gap: 8px;
         }
 
-        .search-container input {
+        .search-wrapper {
+            display: flex;
             width: 100%;
-            padding: 10px 15px;
-            border: 1px solid #333;
-            border-radius: 20px 0 0 20px;
-            background-color: #121212;
-            color: white;
+            max-width: 600px;
+        }
+
+        .search-wrapper input {
+            flex-grow: 1;
+            padding: 0 16px;
+            height: 40px;
+            border: 1px solid var(--border-color);
+            border-radius: 40px 0 0 40px;
             font-size: 16px;
             outline: none;
         }
 
-        .search-container input:focus {
+        .search-wrapper input:focus {
             border-color: var(--primary-color);
         }
 
-        .search-container button {
-            padding: 10px 20px;
-            border: 1px solid #333;
+        .search-btn {
+            width: 64px;
+            height: 40px;
+            background-color: #f8f8f8;
+            border: 1px solid var(--border-color);
             border-left: none;
-            border-radius: 0 20px 20px 0;
-            background-color: #222;
-            color: white;
+            border-radius: 0 40px 40px 0;
             cursor: pointer;
-            transition: background-color 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
-        .search-container button:hover {
-            background-color: #333;
+        .search-btn:hover {
+            background-color: #f0f0f0;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
         }
 
+        .mic-btn {
+            background-color: #f8f8f8;
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .mic-btn:hover {
+            background-color: #e5e5e5;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .icon-btn {
+            background: none;
+            border: none;
+            padding: 8px;
+            cursor: pointer;
+            border-radius: 50%;
+        }
+
+        .icon-btn:hover {
+            background-color: var(--hover-bg);
+        }
+
+        .signin-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 0 12px;
+            height: 36px;
+            border: 1px solid var(--border-color);
+            border-radius: 18px;
+            color: var(--primary-color);
+            background: none;
+            font-weight: 500;
+            cursor: pointer;
+            text-transform: uppercase;
+            font-size: 14px;
+        }
+
+        .signin-btn:hover {
+            background-color: #f2f8ff;
+            border-color: transparent;
+        }
+
+        /* Sidebar */
+        aside {
+            position: fixed;
+            top: 56px;
+            left: 0;
+            bottom: 0;
+            width: 240px;
+            background-color: var(--sidebar-bg);
+            padding: 12px 0;
+            overflow-y: auto;
+            z-index: 900;
+        }
+
+        .sidebar-section {
+            border-bottom: 1px solid var(--border-color);
+            padding: 8px 0;
+        }
+
+        .sidebar-section:last-child {
+            border-bottom: none;
+        }
+
+        .sidebar-item {
+            display: flex;
+            align-items: center;
+            gap: 24px;
+            padding: 0 24px;
+            height: 40px;
+            text-decoration: none;
+            color: var(--text-color);
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        .sidebar-item:hover {
+            background-color: var(--hover-bg);
+        }
+
+        .sidebar-item.active {
+            background-color: var(--active-bg);
+            font-weight: 500;
+        }
+
+        .sidebar-item.active svg {
+            color: var(--primary-color);
+            fill: var(--primary-color);
+        }
+
+        .sidebar-title {
+            padding: 8px 24px;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+        }
+
+        /* Main Content */
         main {
-            padding: 20px;
+            margin-top: 56px;
+            margin-left: 240px;
+            padding: 24px;
         }
 
         .grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            gap: 20px;
-            margin-top: 20px;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 16px;
+            row-gap: 40px;
         }
 
+        /* Video Card */
         .card {
-            background: transparent;
+            display: flex;
+            flex-direction: column;
+            cursor: pointer;
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .thumbnail-container {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 16 / 9;
             border-radius: 12px;
             overflow: hidden;
-            transition: transform 0.2s;
-            cursor: pointer;
+            background-color: #e5e5e5;
+            margin-bottom: 12px;
         }
 
-        .card:hover {
-            transform: translateY(-5px);
+        .thumbnail-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
         }
 
-        .video-info {
-            padding: 12px 0;
+        .video-details {
             display: flex;
             gap: 12px;
         }
 
-        .channel-icon {
+        .channel-avatar {
             width: 36px;
             height: 36px;
             border-radius: 50%;
             background-color: var(--primary-color);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
             flex-shrink: 0;
         }
 
-        .details {
+        .video-info {
             display: flex;
             flex-direction: column;
+            flex-grow: 1;
         }
 
         .video-title {
             font-size: 16px;
             font-weight: 500;
-            margin: 0 0 5px 0;
+            margin: 0 0 4px 0;
             display: -webkit-box;
             -webkit-line-clamp: 2;
             -webkit-box-orient: vertical;
@@ -146,29 +317,87 @@
             margin: 0;
         }
 
+        .video-meta {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin: 0;
+        }
+
         .loading {
+            grid-column: 1 / -1;
             text-align: center;
             padding: 40px;
-            font-size: 18px;
             color: var(--primary-color);
+            font-weight: 500;
+        }
+
+        /* Modal for playback */
+        #video-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            width: 90%;
+            max-width: 900px;
+            aspect-ratio: 16/9;
+            background: black;
+            position: relative;
+        }
+
+        .close-modal {
+            position: absolute;
+            top: -40px;
+            right: 0;
+            color: white;
+            font-size: 30px;
+            cursor: pointer;
         }
 
         iframe {
             width: 100%;
-            aspect-ratio: 16 / 9;
-            border-radius: 12px;
+            height: 100%;
             border: none;
-            margin-top: 10px;
+        }
+
+        @media (max-width: 1000px) {
+            aside {
+                width: 72px;
+            }
+            .sidebar-item {
+                padding: 0;
+                flex-direction: column;
+                height: 72px;
+                justify-content: center;
+                gap: 4px;
+                font-size: 10px;
+            }
+            .sidebar-title, .sidebar-section:not(:first-child) {
+                display: none;
+            }
+            main {
+                margin-left: 72px;
+            }
         }
 
         @media (max-width: 600px) {
-            header {
-                flex-direction: column;
-                gap: 10px;
+            header .header-center {
+                display: none;
             }
-            .search-container {
-                width: 100%;
-                margin: 0;
+            aside {
+                display: none;
+            }
+            main {
+                margin-left: 0;
+                padding: 12px;
             }
         }
     </style>
@@ -176,76 +405,238 @@
 <body>
 
 <header>
-    <a href="/" class="logo">
-        <svg height="24" viewBox="0 0 24 24" width="24" fill="currentColor"><path d="M21.58 7.19c-.23-.86-.91-1.54-1.77-1.77C18.25 5 12 5 12 5s-6.25 0-7.81.42c-.86.23-1.54.91-1.77 1.77C2 8.75 2 12 2 12s0 3.25.42 4.81c.23.86.91 1.54 1.77 1.77C5.75 19 12 19 12 19s6.25 0 7.81-.42c.86-.23 1.54-.91 1.77-1.77.42-1.56.42-4.81.42-4.81s0-3.25-.42-4.81zM10 15V9l5.2 3-5.2 3z"/></svg>
-        <span>Playtube</span>
-    </a>
-    <div class="search-container">
-        <input type="text" id="search" placeholder="Cari video...">
-        <button onclick="searchVideo()">
-            <svg height="20" viewBox="0 0 24 24" width="20" fill="currentColor"><path d="M20.87 20.17l-5.59-5.59C16.35 13.35 17 11.75 17 10c0-3.87-3.13-7-7-7s-7 3.13-7 7 3.13 7 7 7c1.75 0 3.35-.65 4.58-1.71l5.59 5.59.7-.71zM10 16c-3.31 0-6-2.69-6-6s2.69-6 6-6 6 2.69 6 6-2.69 6-6 6z"/></svg>
+    <div class="header-left">
+        <button class="menu-btn">
+            <svg height="24" viewBox="0 0 24 24" width="24"><path d="M21 6H3V5h18v1zm0 5H3v1h18v-1zm0 6H3v1h18v-1z"></path></svg>
+        </button>
+        <a href="/" class="logo">
+            <svg height="24" viewBox="0 0 24 24" width="24" fill="currentColor"><path d="M21.58 7.19c-.23-.86-.91-1.54-1.77-1.77C18.25 5 12 5 12 5s-6.25 0-7.81.42c-.86.23-1.54.91-1.77 1.77C2 8.75 2 12 2 12s0 3.25.42 4.81c.23.86.91 1.54 1.77 1.77C5.75 19 12 19 12 19s6.25 0 7.81-.42c.86-.23 1.54-.91 1.77-1.77.42-1.56.42-4.81.42-4.81s0-3.25-.42-4.81zM10 15V9l5.2 3-5.2 3z"/></svg>
+            <span>Playtube</span>
+        </a>
+    </div>
+    <div class="header-center">
+        <div class="search-wrapper">
+            <input type="text" id="search-input" placeholder="Telusuri">
+            <button class="search-btn" id="search-btn">
+                <svg height="24" viewBox="0 0 24 24" width="24"><path d="M20.87 20.17l-5.59-5.59C16.35 13.35 17 11.75 17 10c0-3.87-3.13-7-7-7s-7 3.13-7 7 3.13 7 7 7c1.75 0 3.35-.65 4.58-1.71l5.59 5.59.7-.71zM10 16c-3.31 0-6-2.69-6-6s2.69-6 6-6 6 2.69 6 6-2.69 6-6 6z"></path></svg>
+            </button>
+        </div>
+        <button class="mic-btn">
+            <svg height="24" viewBox="0 0 24 24" width="24"><path d="M12 3c-1.66 0-3 1.34-3 3v7c0 1.66 1.34 3 3 3s3-1.34 3-3V6c0-1.66-1.34-3-3-3zM11 19v2h2v-2c3.38 0 6-2.62 6-6h-1c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.38 2.62 6 6 6z"></path></svg>
         </button>
     </div>
-    <div style="width: 40px;"></div> <!-- Spacer -->
+    <div class="header-right">
+        <button class="icon-btn">
+            <svg height="24" viewBox="0 0 24 24" width="24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"></path></svg>
+        </button>
+        <button class="signin-btn">
+            <svg height="24" viewBox="0 0 24 24" width="24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"></path></svg>
+            Login
+        </button>
+    </div>
 </header>
+
+<aside>
+    <div class="sidebar-section">
+        <a class="sidebar-item active" onclick="loadTrending()">
+            <svg height="24" viewBox="0 0 24 24" width="24"><path d="M4 10V21h6V15h4v6h6V10L12 3Z"></path></svg>
+            <span>Beranda</span>
+        </a>
+        <a class="sidebar-item" onclick="loadTrending()">
+            <svg height="24" viewBox="0 0 24 24" width="24"><path d="M10 14.65v-5.3L15 12l-5 2.65ZM13 13V7l5.2 3-5.2 3ZM22 13h-4v9h-2v-9h-2V7h8v6ZM2 13h1V7H2v6Zm3 0h1V7H5v6Zm3 0h1V7H8v6Z"></path></svg>
+            <span>Trending</span>
+        </a>
+        <a class="sidebar-item">
+            <svg height="24" viewBox="0 0 24 24" width="24"><path d="M20 7H4v10h16V7zm2-2v14H2V5h20zM7 14l5-3 5 3v-1l-5-3-5 3v1z"></path></svg>
+            <span>Subscriptions</span>
+        </a>
+    </div>
+    <div class="sidebar-section">
+        <a class="sidebar-item">
+            <svg height="24" viewBox="0 0 24 24" width="24"><path d="M11 7l6 3.5-6 3.5V7zm7 13H4V6H3v15h15v-1zm3-2H6V3h15v15zM7 17h13V4H7v13z"></path></svg>
+            <span>Library</span>
+        </a>
+        <a class="sidebar-item">
+            <svg height="24" viewBox="0 0 24 24" width="24"><path d="M13 3a9 9 0 0 0-9 9H1l3.89 3.89.07.14L9 12H6a7 7 0 1 1 7 7 7.07 7.07 0 0 1-6-3.22l-1.44 1.44A9 9 0 1 0 13 3z"></path></svg>
+            <span>History</span>
+        </a>
+    </div>
+    <div class="sidebar-title">Best of Playtube</div>
+    <div class="sidebar-section">
+        <a class="sidebar-item" onclick="loadCategory(10)">
+            <svg height="24" viewBox="0 0 24 24" width="24"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"></path></svg>
+            <span>Music</span>
+        </a>
+        <a class="sidebar-item" onclick="loadCategory(20)">
+            <svg height="24" viewBox="0 0 24 24" width="24"><path d="M21 6H3c-1.1 0-2 .9-2 2v8c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-10 7H8v3H6v-3H3v-2h3V8h2v3h3v2zm4.5 2c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm4-3c-.83 0-1.5-.67-1.5-1.5S18.67 10 19.5 10s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"></path></svg>
+            <span>Gaming</span>
+        </a>
+        <a class="sidebar-item" onclick="loadCategory(25)">
+            <svg height="24" viewBox="0 0 24 24" width="24"><path d="M20 3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-1 16H5V5h14v14zM11 7h6v2h-6V7zm0 4h6v2h-6v-2zm-4 4h10v2H7v-2z"></path></svg>
+            <span>News</span>
+        </a>
+        <a class="sidebar-item" onclick="loadSearch('live')">
+            <svg height="24" viewBox="0 0 24 24" width="24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14.5v-9l6 4.5-6 4.5z"></path></svg>
+            <span>Live</span>
+        </a>
+        <a class="sidebar-item" onclick="loadSearch('360 video')">
+            <svg height="24" viewBox="0 0 24 24" width="24"><path d="M12 2c5.52 0 10 4.48 10 10s-4.48 10-10 10S2 17.52 2 12 6.48 2 12 2zm0 18c4.41 0 8-3.59 8-8s-3.59-8-8-8-8 3.59-8 8 3.59 8 8 8zm-1-13h2v4h4v2h-4v4h-2v-4H7v-2h4V7z"></path></svg>
+            <span>360° Video</span>
+        </a>
+    </div>
+</aside>
 
 <main>
     <div class="grid" id="results">
-        <!-- Results will be displayed here -->
+        <div class="loading">Memuat video...</div>
     </div>
 </main>
 
+<div id="video-modal">
+    <div class="modal-content">
+        <span class="close-modal">&times;</span>
+        <div id="player"></div>
+    </div>
+</div>
+
 <script>
-async function searchVideo() {
-  const query = document.getElementById("search").value;
-  if (!query) return;
+    const resultsGrid = document.getElementById('results');
+    const searchInput = document.getElementById('search-input');
+    const searchBtn = document.getElementById('search-btn');
+    const videoModal = document.getElementById('video-modal');
+    const closeModal = document.querySelector('.close-modal');
+    const playerContainer = document.getElementById('player');
 
-  const results = document.getElementById("results");
-  results.innerHTML = '<div class="loading">Mencari...</div>';
-
-  try {
-    const res = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
-    const data = await res.json();
-
-    results.innerHTML = "";
-
-    if (!data.items || data.items.length === 0) {
-      results.innerHTML = "<p>Tidak ada hasil.</p>";
-      return;
+    async function fetchVideos(url) {
+        resultsGrid.innerHTML = '<div class="loading">Memuat video...</div>';
+        try {
+            const res = await fetch(url);
+            const data = await res.json();
+            renderVideos(data.items);
+        } catch (error) {
+            console.error(error);
+            resultsGrid.innerHTML = '<div class="loading">Gagal memuat video.</div>';
+        }
     }
 
-    data.items.forEach(video => {
-      if (!video.id.videoId) return;
+    function renderVideos(items) {
+        resultsGrid.innerHTML = '';
+        if (!items || items.length === 0) {
+            resultsGrid.innerHTML = '<div class="loading">Tidak ada hasil.</div>';
+            return;
+        }
 
-      const card = document.createElement('div');
-      card.className = 'card';
-      card.innerHTML = `
-        <iframe 
-          src="https://www.youtube.com/embed/${video.id.videoId}" 
-          allowfullscreen>
-        </iframe>
-        <div class="video-info">
-            <div class="channel-icon"></div>
-            <div class="details">
-                <h3 class="video-title">${video.snippet.title}</h3>
-                <p class="channel-name">${video.snippet.channelTitle}</p>
-            </div>
-        </div>
-      `;
-      results.appendChild(card);
+        items.forEach(video => {
+            const videoId = video.id.videoId || video.id;
+            const snippet = video.snippet;
+            if (typeof videoId !== 'string') return;
+
+            const card = document.createElement('div');
+            card.className = 'card';
+            card.onclick = () => openVideo(videoId);
+
+            const initials = snippet.channelTitle.charAt(0).toUpperCase();
+
+            card.innerHTML = `
+                <div class="thumbnail-container">
+                    <img src="${snippet.thumbnails.high.url}" alt="">
+                </div>
+                <div class="video-details">
+                    <div class="channel-avatar">${initials}</div>
+                    <div class="video-info">
+                        <h3 class="video-title"></h3>
+                        <p class="channel-name"></p>
+                        <p class="video-meta"></p>
+                    </div>
+                </div>
+            `;
+
+            // Set text content safely
+            const titleEl = card.querySelector('.video-title');
+            titleEl.textContent = snippet.title;
+            titleEl.title = snippet.title;
+
+            card.querySelector('.channel-name').textContent = snippet.channelTitle;
+            card.querySelector('.video-meta').textContent = `${getRandomViews()} • ${getRandomTime()}`;
+            resultsGrid.appendChild(card);
+        });
+    }
+
+    function getRandomViews() {
+        const views = Math.floor(Math.random() * 1000) + 1;
+        return views + " rb x ditonton";
+    }
+
+    function getRandomTime() {
+        const times = ["1 jam yang lalu", "5 jam yang lalu", "1 hari yang lalu", "3 hari yang lalu", "1 minggu yang lalu", "1 bulan yang lalu"];
+        return times[Math.floor(Math.random() * times.length)];
+    }
+
+    function openVideo(videoId) {
+        playerContainer.innerHTML = `<iframe src="https://www.youtube.com/embed/${videoId}?autoplay=1" allow="autoplay; fullscreen" allowfullscreen></iframe>`;
+        videoModal.style.display = 'flex';
+    }
+
+    closeModal.onclick = () => {
+        videoModal.style.display = 'none';
+        playerContainer.innerHTML = '';
+    };
+
+    window.onclick = (event) => {
+        if (event.target == videoModal) {
+            videoModal.style.display = 'none';
+            playerContainer.innerHTML = '';
+        }
+    };
+
+    function loadTrending() {
+        setActiveSidebar('Beranda');
+        fetchVideos('/api/trending');
+    }
+
+    function loadCategory(id) {
+        // Find sidebar item by text
+        setActiveSidebar(null, id);
+        fetchVideos(`/api/category?id=${id}`);
+    }
+
+    function loadSearch(q) {
+        setActiveSidebar(null, null, q);
+        fetchVideos(`/api/search?q=${encodeURIComponent(q)}`);
+    }
+
+    function setActiveSidebar(text, categoryId, query) {
+        const items = document.querySelectorAll('.sidebar-item');
+        items.forEach(item => {
+            item.classList.remove('active');
+            if (text && item.innerText.includes(text)) {
+                item.classList.add('active');
+            }
+        });
+    }
+
+    searchBtn.onclick = () => {
+        const q = searchInput.value;
+        if (q) loadSearch(q);
+    };
+
+    searchInput.onkeypress = (e) => {
+        if (e.key === 'Enter') {
+            const q = searchInput.value;
+            if (q) loadSearch(q);
+        }
+    };
+
+    // Sidebar navigation interactivity
+    document.querySelectorAll('.sidebar-item').forEach(item => {
+        item.addEventListener('click', () => {
+            document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
+            item.classList.add('active');
+        });
     });
-  } catch (error) {
-    console.error("Error fetching data:", error);
-    results.innerHTML = "<p>Terjadi kesalahan. Silakan coba lagi nanti.</p>";
-  }
-}
 
-// Allow search on Enter key
-document.getElementById("search").addEventListener("keypress", function(event) {
-  if (event.key === "Enter") {
-    searchVideo();
-  }
-});
+    // Initial load
+    loadTrending();
 </script>
 
 </body>
