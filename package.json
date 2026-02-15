@@ -1,5 +1,5 @@
 {
-  "name": "yt-clone",
+  "name": "playtube",
   "version": "1.0.0",
   "description": "YouTube Clone Backend",
   "main": "server.js",
