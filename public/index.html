@@ -167,7 +167,7 @@
         /* Ripple Effect */
         .ripple {
             position: absolute;
-            background: rgba(255, 255, 255, 0.3);
+            background: rgba(157, 78, 221, 0.4);
             border-radius: 50%;
             transform: scale(0);
             animation: ripple-animation 0.6s linear;
@@ -374,9 +374,9 @@
 
         .grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
             gap: 16px;
-            row-gap: 40px;
+            row-gap: 32px;
             animation: fadeIn 0.4s ease-in;
         }
 
@@ -392,6 +392,11 @@
             cursor: pointer;
             text-decoration: none;
             color: inherit;
+            transition: transform 0.1s ease-in-out;
+        }
+
+        .card:active {
+            transform: scale(0.98);
         }
 
         .thumbnail-container {
@@ -400,7 +405,7 @@
             aspect-ratio: 16 / 9;
             border-radius: 12px;
             overflow: hidden;
-            background-color: #000;
+            background-color: #1a1a1a;
             margin-bottom: 12px;
         }
 
@@ -414,8 +419,10 @@
         /* Search Results horizontal layout */
         .card.horizontal {
             flex-direction: row !important;
-            gap: 12px;
-            padding: 8px 12px;
+            gap: 16px;
+            padding: 8px 0;
+            margin: 0 16px;
+            border-bottom: none !important;
         }
 
         .card.horizontal .thumbnail-container {
@@ -425,6 +432,19 @@
             border-radius: 8px;
         }
 
+        @media (min-width: 601px) {
+            .card.horizontal {
+                margin: 0;
+                padding: 0;
+                gap: 20px;
+            }
+            .card.horizontal .thumbnail-container {
+                width: 240px;
+                min-width: 240px;
+                border-radius: 12px;
+            }
+        }
+
         @media (min-width: 1000px) {
             .card.horizontal .thumbnail-container {
                 width: 360px;
@@ -432,6 +452,17 @@
             }
             .card.horizontal .video-title {
                 font-size: 18px;
+                -webkit-line-clamp: 2;
+                margin-bottom: 8px;
+            }
+            .card.horizontal .video-description {
+                display: -webkit-box !important;
+                font-size: 12px;
+                color: var(--text-secondary);
+                margin-top: 8px;
+                -webkit-line-clamp: 2;
+                -webkit-box-orient: vertical;
+                overflow: hidden;
             }
         }
 
@@ -439,6 +470,7 @@
             padding: 0;
             flex-direction: column;
             gap: 4px;
+            flex-grow: 1;
         }
 
         .card.horizontal .channel-avatar {
@@ -448,6 +480,30 @@
         .card.horizontal .video-title {
             font-size: 14px;
             -webkit-line-clamp: 2;
+        }
+
+        .card.horizontal .video-description {
+            display: none;
+        }
+
+        .card.horizontal .channel-info-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin: 8px 0;
+        }
+
+        .card.horizontal .channel-avatar-small {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background-color: var(--primary-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            font-weight: bold;
+            color: white;
         }
 
         /* Fluid suggested thumbnails for mobile */
@@ -663,28 +719,33 @@
         }
 
         .video-title {
-            font-size: 15px;
+            font-size: 16px;
             font-weight: 500;
-            margin: 0 0 4px 0;
+            margin: 0 0 6px 0;
             display: -webkit-box;
             -webkit-line-clamp: 2;
             -webkit-box-orient: vertical;
             overflow: hidden;
             line-height: 1.4;
             letter-spacing: 0.1px;
+            color: var(--text-color);
         }
 
         .channel-name {
-            font-size: 13px;
+            font-size: 14px;
             color: var(--text-secondary);
-            margin: 0;
+            margin: 0 0 2px 0;
             display: flex;
             align-items: center;
             gap: 4px;
         }
 
+        .channel-name:hover {
+            color: var(--text-color);
+        }
+
         .video-meta {
-            font-size: 13px;
+            font-size: 14px;
             color: var(--text-secondary);
             margin: 0;
         }
@@ -1336,8 +1397,8 @@
         }
 
         .chip.active {
-            background-color: white;
-            color: black;
+            background-color: var(--primary-color);
+            color: white;
         }
 
         @media (max-width: 1000px) {
@@ -1772,6 +1833,19 @@
     const closePlayer = document.getElementById('close-player');
     const playerContainer = document.getElementById('player');
 
+    function escapeHTML(str) {
+        if (!str) return "";
+        return str.replace(/[&<>"']/g, function(m) {
+            return {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;'
+            }[m];
+        });
+    }
+
     async function fetchVideos(url, layout = 'vertical') {
         resultsGrid.innerHTML = '';
         resultsGrid.style.animation = 'none';
@@ -1874,22 +1948,45 @@
 
             const initials = snippet.channelTitle.charAt(0).toUpperCase();
 
-            card.innerHTML = `
-                <div class="thumbnail-container">
-                    <img src="${snippet.thumbnails.high.url}" alt="">
-                </div>
-                <div class="video-details">
-                    <div class="channel-avatar">${initials}</div>
-                    <div class="video-info">
-                        <h3 class="video-title"></h3>
-                        <p class="channel-name"></p>
-                        <p class="video-meta"></p>
+            if (layout === 'horizontal') {
+                card.innerHTML = `
+                    <div class="thumbnail-container">
+                        <img src="${snippet.thumbnails.high.url}" alt="">
                     </div>
-                    <div style="margin-left: auto; padding-top: 4px;">
-                        <svg height="24" viewBox="0 0 24 24" width="24" fill="white"><path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"></path></svg>
+                    <div class="video-details">
+                        <div class="video-info">
+                            <h3 class="video-title"></h3>
+                            <p class="video-meta"></p>
+                            <div class="channel-info-row">
+                                <div class="channel-avatar-small">${initials}</div>
+                                <p class="channel-name"></p>
+                            </div>
+                            <p class="video-description"></p>
+                        </div>
+                        <div style="margin-left: auto; padding-top: 4px;">
+                            <svg height="24" viewBox="0 0 24 24" width="24" fill="white"><path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"></path></svg>
+                        </div>
                     </div>
-                </div>
-            `;
+                `;
+                card.querySelector('.video-description').textContent = snippet.description || "Video menarik dari " + snippet.channelTitle + ". Tonton sekarang di Playtube.";
+            } else {
+                card.innerHTML = `
+                    <div class="thumbnail-container">
+                        <img src="${snippet.thumbnails.high.url}" alt="">
+                    </div>
+                    <div class="video-details">
+                        <div class="channel-avatar">${initials}</div>
+                        <div class="video-info">
+                            <h3 class="video-title"></h3>
+                            <p class="channel-name"></p>
+                            <p class="video-meta"></p>
+                        </div>
+                        <div style="margin-left: auto; padding-top: 4px;">
+                            <svg height="24" viewBox="0 0 24 24" width="24" fill="white"><path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"></path></svg>
+                        </div>
+                    </div>
+                `;
+            }
 
             // Set text content safely
             const titleEl = card.querySelector('.video-title');
@@ -2269,22 +2366,34 @@
     function showSuggestions() {
         const q = searchInput.value;
         if (q === '' && recentSearches.length > 0) {
-            suggestionsBox.innerHTML = recentSearches.map(item => `
-                <div class="suggestion-item" onclick="selectSuggestion('${item}')">
+            suggestionsBox.innerHTML = '';
+            recentSearches.forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'suggestion-item';
+                div.onclick = () => selectSuggestion(item);
+                div.innerHTML = `
                     <svg height="24" viewBox="0 0 24 24" width="24" fill="currentColor"><path d="M13 3a9 9 0 0 0-9 9H1l3.89 3.89.07.14L9 12H6a7 7 0 1 1 7 7 7.07 7.07 0 0 1-6-3.22l-1.44 1.44A9 9 0 1 0 13 3z"></path></svg>
-                    <span>${item}</span>
-                </div>
-            `).join('');
+                    <span></span>
+                `;
+                div.querySelector('span').textContent = item;
+                suggestionsBox.appendChild(div);
+            });
             suggestionsBox.style.display = 'block';
         } else if (q.length > 0) {
             // Mock suggestions
             const mocks = [q, q + ' musik', q + ' shorts', q + ' trending', q + ' gaming'];
-            suggestionsBox.innerHTML = mocks.map(item => `
-                <div class="suggestion-item" onclick="selectSuggestion('${item}')">
+            suggestionsBox.innerHTML = '';
+            mocks.forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'suggestion-item';
+                div.onclick = () => selectSuggestion(item);
+                div.innerHTML = `
                     <svg height="24" viewBox="0 0 24 24" width="24" fill="currentColor"><path d="M20.87 20.17l-5.59-5.59C16.35 13.35 17 11.75 17 10c0-3.87-3.13-7-7-7s-7 3.13-7 7 3.13 7 7 7c1.75 0 3.35-.65 4.58-1.71l5.59 5.59.7-.71zM10 16c-3.31 0-6-2.69-6-6s2.69-6 6-6 6 2.69 6 6-2.69 6-6 6z"></path></svg>
-                    <span>${item}</span>
-                </div>
-            `).join('');
+                    <span></span>
+                `;
+                div.querySelector('span').textContent = item;
+                suggestionsBox.appendChild(div);
+            });
             suggestionsBox.style.display = 'block';
         } else {
             suggestionsBox.style.display = 'none';
@@ -2518,10 +2627,10 @@
 
         list.innerHTML = allComments.map(c => `
             <div class="comment-item">
-                <div class="comment-avatar" style="background-color: ${stringToColor(c.user)}">${c.user.charAt(0)}</div>
+                <div class="comment-avatar" style="background-color: ${stringToColor(c.user)}">${escapeHTML(c.user.charAt(0))}</div>
                 <div class="comment-body">
-                    <div class="comment-user">${c.user} <span class="comment-time">${c.time}</span></div>
-                    <div class="comment-text">${c.text}</div>
+                    <div class="comment-user">${escapeHTML(c.user)} <span class="comment-time">${escapeHTML(c.time)}</span></div>
+                    <div class="comment-text">${escapeHTML(c.text)}</div>
                     <div class="comment-actions">
                         <span onclick="showToast('Suka komentar')">Suka</span>
                         <span onclick="showToast('Balas komentar')">Balas</span>
