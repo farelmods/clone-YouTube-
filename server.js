@@ -35,8 +35,13 @@ app.get("/api/search", async (req, res) => {
 
     res.json(response.data);
   } catch (err) {
-    console.error(err.response?.data || err.message);
-    res.status(500).json({ error: "Gagal ambil data YouTube" });
+    console.error("Search error, fallback to mock:", err.response?.data || err.message);
+    res.json({
+        items: [
+            { id: { videoId: 'dQw4w9WgXcQ' }, snippet: { title: 'Mock Search Result 1', channelTitle: 'Mock Channel', thumbnails: { medium: { url: 'https://via.placeholder.com/320x180/9d4edd/ffffff?text=Playtube+Video' } }, publishedAt: new Date().toISOString() } },
+            { id: { videoId: '3JZ_D3ELwOQ' }, snippet: { title: 'Mock Search Result 2', channelTitle: 'Mock Channel', thumbnails: { medium: { url: 'https://via.placeholder.com/320x180/9d4edd/ffffff?text=Playtube+Video' } }, publishedAt: new Date().toISOString() } }
+        ]
+    });
   }
 });
 
@@ -56,8 +61,21 @@ app.get("/api/trending", async (req, res) => {
 
     res.json(response.data);
   } catch (err) {
-    console.error(err.response?.data || err.message);
-    res.status(500).json({ error: "Gagal ambil data Trending" });
+    console.error("Trending error, fallback to mock:", err.response?.data || err.message);
+    const mockItems = [];
+    for (let i = 1; i <= 10; i++) {
+        mockItems.push({
+            id: 'video' + i,
+            snippet: {
+                title: 'Video Trending Playtube ' + i,
+                channelTitle: 'Saluran Ungu ' + i,
+                thumbnails: { medium: { url: `https://via.placeholder.com/320x180/9d4edd/ffffff?text=Trending+${i}` } },
+                publishedAt: new Date().toISOString()
+            },
+            statistics: { viewCount: Math.floor(Math.random() * 1000000).toString() }
+        });
+    }
+    res.json({ items: mockItems });
   }
 });
 
@@ -80,8 +98,8 @@ app.get("/api/category", async (req, res) => {
     });
     res.json(response.data);
   } catch (err) {
-    console.error(err.response?.data || err.message);
-    res.status(500).json({ error: "Gagal ambil data Kategori" });
+    console.error("Category error, fallback to mock:", err.response?.data || err.message);
+    res.json({ items: [] });
   }
 });
 

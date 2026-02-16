@@ -1,4 +1,3 @@
-const API_KEY = ''; // Kosongkan jika menggunakan mock
 const RESULTS_PER_PAGE = 12;
 let currentPage = 1;
 let currentQuery = '';
@@ -742,20 +741,28 @@ const loginForm = document.getElementById('login-form');
 const headerLoginBtn = document.getElementById('header-login-btn');
 
 function checkLoginState() {
-    if (!currentUser && window.innerWidth < 600) {
-        // Option: Force login on mobile if desired
+    if (!currentUser) {
+        loginModal.classList.add('active');
+        if (closeLogin) closeLogin.style.display = 'none';
     }
 }
 
-if (headerLoginBtn) headerLoginBtn.onclick = () => loginModal.classList.add('active');
+if (headerLoginBtn) headerLoginBtn.onclick = () => {
+    loginModal.classList.add('active');
+    if (closeLogin) closeLogin.style.display = 'block';
+};
+
 if (closeLogin) closeLogin.onclick = () => loginModal.classList.remove('active');
 
 loginForm.onsubmit = (e) => {
     e.preventDefault();
-    currentUser = { name: 'Pengguna Playtube', email: 'user@example.com' };
+    const emailInput = loginForm.querySelector('input[type="text"]');
+    const name = emailInput.value.split('@')[0] || 'Pengguna Playtube';
+    currentUser = { name: name, email: emailInput.value };
     localStorage.setItem('playtube_user', JSON.stringify(currentUser));
     showToast('Login berhasil! Selamat datang.');
     loginModal.classList.remove('active');
+    setTimeout(() => location.reload(), 500);
 };
 
 // Toast Utility
