@@ -367,6 +367,11 @@ main {
     margin-top: 104px;
     margin-left: 240px;
     padding: 16px 24px;
+    padding-bottom: 80px; /* Space for mini-player on desktop if needed */
+}
+
+body.no-categories main {
+    margin-top: 56px;
 }
 
 .grid {
@@ -962,7 +967,7 @@ main {
     width: 100%;
     height: 100%;
     background: #0f0f0f;
-    z-index: 3000;
+    z-index: 8000;
     align-items: center;
     justify-content: center;
 }
@@ -980,7 +985,7 @@ main {
     width: 100%;
     height: 100%;
     background: var(--bg-color);
-    z-index: 5000;
+    z-index: 6000;
     flex-direction: column;
     overflow-y: auto;
     transform: translateY(100%);
@@ -1088,7 +1093,7 @@ main {
     right: 0;
     height: 70%;
     background-color: #0f0f0f;
-    z-index: 6000;
+    z-index: 7000;
     border-radius: 16px 16px 0 0;
     flex-direction: column;
     transform: translateY(100%);
@@ -1321,6 +1326,8 @@ main {
     font-weight: 500;
     overflow: hidden;
     text-overflow: ellipsis;
+    line-height: 1.4;
+    max-height: 1.4em;
 }
 
 .mini-player-channel {
@@ -1567,7 +1574,7 @@ iframe {
     border-radius: 4px;
     padding: 12px;
     position: fixed;
-    z-index: 6000;
+    z-index: 9000;
     left: 50%;
     bottom: 80px;
     transform: translateX(-50%);
@@ -1623,7 +1630,10 @@ iframe {
         margin-top: 104px;
         margin-left: 0;
         padding: 0;
-        margin-bottom: 56px;
+        padding-bottom: 130px; /* Space for bottom-nav (56) + mini-player (64) + gap (10) */
+    }
+    body.no-categories main {
+        margin-top: 56px;
     }
     .categories-bar {
         left: 0;
@@ -1822,12 +1832,13 @@ iframe {
     width: 100%;
     height: 100%;
     background-color: var(--bg-color);
-    z-index: 2100;
+    z-index: 5500; /* Higher than video modal to be on top if opened from video */
     flex-direction: column;
     overflow-y: auto;
     transform: translateX(100%);
     transition: transform 0.3s cubic-bezier(0.33, 1, 0.68, 1);
     pointer-events: none;
+    padding-bottom: 80px;
 }
 
 .page-overlay.active {

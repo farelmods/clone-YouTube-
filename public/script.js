@@ -46,14 +46,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Setup back button handling for mobile
     window.addEventListener('popstate', (event) => {
+        closeAllOverlays();
         if (event.state) {
-            if (event.state.page === 'video') openVideo(event.state.id, true);
-            if (event.state.page === 'channel') openChannel(event.state.id, true);
-            if (event.state.page === 'home') {
-                closeAllOverlays();
+            if (event.state.page === 'video') {
+                const videoData = event.state.video || event.state.id;
+                openVideo(videoData, true);
             }
-        } else {
-            closeAllOverlays();
+            if (event.state.page === 'channel') {
+                openChannel(event.state.id, event.state.name, true);
+            }
         }
     });
 });
@@ -384,21 +385,20 @@ function openVideo(video, fromPopState = false) {
 }
 
 closePlayer.onclick = () => {
-    videoModal.classList.remove('active');
-    const playerWrapper = document.getElementById('player-wrapper');
-    playerWrapper.innerHTML = '';
+    // We only call history.back() if we are in a video state.
+    // The popstate handler will take care of calling closeAllOverlays().
+    if (history.state && history.state.page === 'video') {
+        history.back();
+    } else {
+        closeAllOverlays();
+    }
 
     // Show Mini Player
-    const mini = document.getElementById('mini-player');
     const miniThumb = document.getElementById('mini-thumb');
     if (lastVideo) {
         const videoId = typeof lastVideo === 'string' ? lastVideo : lastVideo.id;
         miniThumb.innerHTML = `<iframe src="https://www.youtube.com/embed/${videoId}" frameborder="0"></iframe>`;
         toggleActive('mini-player', true);
-    }
-
-    if (history.state && history.state.page === 'video') {
-        history.back();
     }
 };
 
@@ -545,17 +545,25 @@ function closeAllOverlays() {
     toggleActive('comments-overlay', false);
     toggleActive('notification-overlay', false);
     toggleActive('channel-view', false);
+    document.getElementById('video-modal').classList.remove('active');
     document.getElementById('login-modal').classList.remove('active');
+
+    // Stop any playing video when closing modal
+    const playerWrapper = document.getElementById('player-wrapper');
+    if (playerWrapper) playerWrapper.innerHTML = '';
 }
 
 // Channel View
 function openChannel(channelId, channelName, fromPopState = false) {
-    const name = channelName || channelId;
+    // If channelName is literally 'true' (from bug), or empty, use channelId
+    const name = (channelName && channelName !== true && channelName !== 'true') ? channelName : channelId;
+
     if (!fromPopState) {
         history.pushState({page: 'channel', id: channelId, name: name}, '');
     }
 
     const channelView = document.getElementById('channel-view');
+    closeAllOverlays(); // Close others first
     toggleActive('channel-view', true);
 
     // Load channel data
@@ -599,9 +607,10 @@ function openChannel(channelId, channelName, fromPopState = false) {
 }
 
 document.getElementById('close-channel').onclick = () => {
-    toggleActive('channel-view', false);
     if (history.state && history.state.page === 'channel') {
         history.back();
+    } else {
+        toggleActive('channel-view', false);
     }
 };
 
@@ -990,6 +999,7 @@ function clearHistory() {
 }
 
 function loadAnda() {
+    document.body.classList.add('no-categories');
     document.getElementById('categories-bar').style.display = 'none';
     const name = currentUser ? currentUser.name : 'Pengguna Playtube';
     const email = currentUser ? currentUser.email : '@pengguna_playtube';
@@ -1043,11 +1053,13 @@ function logout() {
 
 function loadTrending() {
     resultsGrid.innerHTML = '';
+    document.body.classList.remove('no-categories');
     document.getElementById('categories-bar').style.display = 'flex';
     fetchTrending();
 }
 
 function loadSearch(q) {
+    document.body.classList.add('no-categories');
     document.getElementById('categories-bar').style.display = 'none';
     searchInput.value = q;
     fetchVideos(q);
@@ -1060,6 +1072,7 @@ function loadCategory(cid) {
 
 function loadSubscriptions() {
     currentCategory = 'subscriptions';
+    document.body.classList.add('no-categories');
     document.getElementById('categories-bar').style.display = 'none';
     resultsGrid.innerHTML = '';
 
