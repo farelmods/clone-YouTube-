@@ -698,29 +698,22 @@ main {
 }
 
 .anda-history-list {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
+    display: flex;
+    overflow-x: auto;
     padding: 0 16px;
     gap: 12px;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
 }
 
-@media (min-width: 601px) {
-    .anda-history-list {
-        display: flex;
-        overflow-x: auto;
-        scrollbar-width: none;
-    }
-    .anda-history-list::-webkit-scrollbar {
-        display: none;
-    }
-    .anda-history-item {
-        min-width: 160px;
-        width: 160px;
-    }
+.anda-history-list::-webkit-scrollbar {
+    display: none;
 }
 
 .anda-history-item {
-    width: 100%;
+    min-width: 160px;
+    width: 160px;
+    flex-shrink: 0;
 }
 
 .anda-history-thumb {
@@ -1639,31 +1632,34 @@ iframe {
         display: flex;
     }
     .grid {
-        grid-template-columns: 1fr 1fr;
-        gap: 10px;
-        padding: 10px;
-    }
-    .card {
-        margin-bottom: 0;
-        border-bottom: none;
-        padding-bottom: 0;
-    }
-    .thumbnail-container {
-        border-radius: 8px;
-        margin-bottom: 6px;
-    }
-    .video-details {
+        grid-template-columns: 1fr;
+        gap: 0;
         padding: 0;
     }
+    .card {
+        margin-bottom: 16px;
+        border-bottom: 1px solid var(--border-color);
+        padding-bottom: 12px;
+    }
+    .thumbnail-container {
+        border-radius: 0;
+        margin-bottom: 12px;
+    }
+    .video-details {
+        padding: 0 12px;
+    }
     .video-title {
-        font-size: 12px;
-        line-height: 1.2;
+        font-size: 14px;
+        line-height: 1.4;
         -webkit-line-clamp: 2;
     }
     .channel-name, .video-meta {
-        font-size: 10px;
+        font-size: 12px;
     }
     .card .channel-avatar {
+        display: flex;
+    }
+    .card:not(.horizontal) .channel-avatar-small {
         display: none;
     }
     .card .video-description {
@@ -1678,13 +1674,17 @@ iframe {
         grid-column: 1 / -1;
     }
     .card.horizontal .thumbnail-container {
-        width: 130px;
-        min-width: 130px;
+        width: 160px;
+        min-width: 160px;
         margin-bottom: 0;
+        border-radius: 8px;
     }
     .card.horizontal .video-title {
-        font-size: 13px;
-        line-height: 1.4;
+        font-size: 14px;
+        line-height: 1.3;
+    }
+    .card.horizontal .video-details {
+        padding: 0 4px;
     }
     .header-right {
         display: flex;

@@ -1,5 +1,5 @@
 {
-  "name": "playtube",
+  "name": "yt-clone",
   "version": "1.0.0",
   "description": "YouTube Clone Backend",
   "main": "server.js",
@@ -7,12 +7,9 @@
     "start": "node server.js"
   },
   "dependencies": {
-    "axios": "^1.7.9",
+    "axios": "^1.6.0",
     "cors": "^2.8.5",
-    "dotenv": "^16.4.5",
-    "express": "^4.21.1"
-  },
-  "devDependencies": {
-    "@playwright/test": "^1.49.1"
+    "dotenv": "^16.4.0",
+    "express": "^4.18.2"
   }
 }

@@ -38,8 +38,8 @@ app.get("/api/search", async (req, res) => {
     console.error("Search error, fallback to mock:", err.response?.data || err.message);
     res.json({
         items: [
-            { id: { videoId: 'dQw4w9WgXcQ' }, snippet: { title: 'Mock Search Result 1', channelTitle: 'Mock Channel', thumbnails: { medium: { url: 'https://via.placeholder.com/320x180/9d4edd/ffffff?text=Playtube+Video' } }, publishedAt: new Date().toISOString() } },
-            { id: { videoId: '3JZ_D3ELwOQ' }, snippet: { title: 'Mock Search Result 2', channelTitle: 'Mock Channel', thumbnails: { medium: { url: 'https://via.placeholder.com/320x180/9d4edd/ffffff?text=Playtube+Video' } }, publishedAt: new Date().toISOString() } }
+                { id: { videoId: 'dQw4w9WgXcQ' }, snippet: { title: 'Lagu Ungu - Tercipta Untukmu (Official Music Video)', channelTitle: 'UNGU Band', thumbnails: { medium: { url: 'https://picsum.photos/seed/ungu1/320/180' } }, publishedAt: new Date().toISOString() } },
+                { id: { videoId: '3JZ_D3ELwOQ' }, snippet: { title: 'Tutorial Desain UI Keren dengan Tema Ungu', channelTitle: 'Playtube Design', thumbnails: { medium: { url: 'https://picsum.photos/seed/ungu2/320/180' } }, publishedAt: new Date().toISOString() } }
         ]
     });
   }
@@ -67,9 +67,9 @@ app.get("/api/trending", async (req, res) => {
         mockItems.push({
             id: 'video' + i,
             snippet: {
-                title: 'Video Trending Playtube ' + i,
+                    title: 'Video Trending Playtube ' + i + ' - Konten Menarik Hari Ini',
                 channelTitle: 'Saluran Ungu ' + i,
-                thumbnails: { medium: { url: `https://via.placeholder.com/320x180/9d4edd/ffffff?text=Trending+${i}` } },
+                    thumbnails: { medium: { url: `https://picsum.photos/seed/trending${i}/320/180` } },
                 publishedAt: new Date().toISOString()
             },
             statistics: { viewCount: Math.floor(Math.random() * 1000000).toString() }

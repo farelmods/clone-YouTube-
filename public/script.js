@@ -801,22 +801,23 @@ function generateMockVideos(query, count) {
     const videos = [];
     const titles = [
         `Cara Membuat Playtube Berwarna Ungu - Tutorial Lengkap ${query}`,
-        `Melihat Keindahan Alam dengan Playtube ${query}`,
-        `Review Smartphone Playtube Terbaru 2024 ${query}`,
-        `10 Lagu Paling Viral Minggu Ini di Playtube ${query}`,
-        `Unboxing Kado Misterius dari Playtube #shorts ${query}`,
-        `Live Streaming Game Terpopuler ${query}`,
-        `Rahasia di Balik Algoritma Playtube ${query}`,
-        `Vlog Harian: Hari yang Menyenangkan ${query}`
+        `Lagu Pop Terpopuler 2024 - Koleksi Terbaik ${query}`,
+        `Melihat Keindahan Alam Nusantara ${query}`,
+        `Review Smartphone Ungu Terbaru - Spek Gahar! ${query}`,
+        `10 Makanan Viral Minggu Ini di Playtube ${query}`,
+        `Unboxing Kado Misterius #shorts ${query}`,
+        `Live Streaming Game Horor Paling Menakutkan ${query}`,
+        `Rahasia di Balik Algoritma Playtube Ungu ${query}`,
+        `Vlog Harian: Jalan-jalan ke Taman Bunga ${query}`
     ];
 
     for (let i = 0; i < count; i++) {
         const id = Math.random().toString(36).substr(2, 9);
         videos.push({
             id: id,
-            title: titles[i % titles.length] + (i > 7 ? ' Part ' + (i-6) : ''),
+            title: titles[i % titles.length],
             thumbnail: `https://picsum.photos/seed/${id}/360/202`,
-            channel: `Channel ${String.fromCharCode(65 + (i % 26))}`,
+            channel: `Saluran Ungu ${String.fromCharCode(65 + (i % 26))}`,
             channelId: `channel_${i % 5}`,
             views: (Math.random() * 1000).toFixed(1) + ' rb',
             time: (i + 1) + ' jam yang lalu',
@@ -989,6 +990,7 @@ function clearHistory() {
 }
 
 function loadAnda() {
+    document.getElementById('categories-bar').style.display = 'none';
     const name = currentUser ? currentUser.name : 'Pengguna Playtube';
     const email = currentUser ? currentUser.email : '@pengguna_playtube';
     const displayHistory = videoHistory.slice(0, 10);
@@ -1040,10 +1042,13 @@ function logout() {
 }
 
 function loadTrending() {
+    resultsGrid.innerHTML = '';
+    document.getElementById('categories-bar').style.display = 'flex';
     fetchTrending();
 }
 
 function loadSearch(q) {
+    document.getElementById('categories-bar').style.display = 'none';
     searchInput.value = q;
     fetchVideos(q);
 }
@@ -1051,6 +1056,59 @@ function loadSearch(q) {
 function loadCategory(cid) {
     const cats = {10: 'musik', 20: 'game', 25: 'berita'};
     fetchCategory(cats[cid] || 'trending');
+}
+
+function loadSubscriptions() {
+    currentCategory = 'subscriptions';
+    document.getElementById('categories-bar').style.display = 'none';
+    resultsGrid.innerHTML = '';
+
+    if (subscriptions.length === 0) {
+        resultsGrid.innerHTML = `
+            <div class="empty-home-container">
+                <div class="empty-home-icon"><svg height="64" viewBox="0 0 24 24" width="64" fill="currentColor"><path d="M10 18v-6l5 3-5 3zm7-15H7v1h10V3zm3 3H4v1h16V6zm2 3H2v12h20V9zM3 10h18v10H3V10z"></path></svg></div>
+                <div class="empty-home-title">Jangan ketinggalan video baru</div>
+                <div class="empty-home-msg">Subscribe ke channel favorit Anda untuk melihat video terbaru mereka di sini.</div>
+                <button class="chip active" onclick="loadTrending()">Telusuri Trending</button>
+            </div>
+        `;
+        return;
+    }
+
+    const subHeader = document.createElement('div');
+    subHeader.className = 'anda-section-header';
+    subHeader.style.paddingTop = '16px';
+    subHeader.innerText = 'Subscription Anda';
+    resultsGrid.appendChild(subHeader);
+
+    const grid = document.createElement('div');
+    grid.className = 'grid';
+    resultsGrid.appendChild(grid);
+
+    // Mocking subscription videos
+    const videos = generateMockVideos('subs', 12);
+    videos.forEach(v => {
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.innerHTML = `
+            <div class="thumbnail-container"><img src="${v.thumbnail}"></div>
+            <div class="video-details">
+                <div class="channel-avatar" style="background-color: ${stringToColor(v.channel)}">${v.channel.charAt(0)}</div>
+                <div class="video-info">
+                    <h3 class="video-title">${v.title}</h3>
+                    <p class="channel-name">${v.channel}</p>
+                    <p class="video-meta">${v.views} x ditonton • ${v.time}</p>
+                </div>
+            </div>
+        `;
+        card.onclick = () => openVideo(v);
+        grid.appendChild(card);
+    });
+}
+
+function setActiveNav(el) {
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    el.classList.add('active');
 }
 
 function toggleActive(id, show) {
