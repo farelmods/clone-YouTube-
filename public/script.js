@@ -26,9 +26,64 @@ let currentUser = JSON.parse(localStorage.getItem('playtube_user') || 'null');
 let videoHistory = JSON.parse(localStorage.getItem('playtube_video_history') || '[]');
 let subscriptions = JSON.parse(localStorage.getItem('playtube_subs') || '[]');
 let localComments = JSON.parse(localStorage.getItem('playtube_comments') || '{}');
+let likedVideos = JSON.parse(localStorage.getItem('playtube_liked') || '[]');
+let savedVideos = JSON.parse(localStorage.getItem('playtube_saved') || '[]');
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
+    // Create Sheet Actions
+    const sheetItems = document.querySelectorAll('#create-sheet .sheet-item');
+    if (sheetItems.length >= 3) {
+        sheetItems[0].onclick = () => mockCreateShort();
+        sheetItems[1].onclick = () => openUpload();
+        sheetItems[2].onclick = () => mockLive();
+    }
+
+    // Upload Overlay Handlers
+    document.getElementById('close-upload').onclick = () => toggleActive('upload-overlay', false);
+    document.getElementById('file-input').onchange = handleFileUpload;
+
+    // Share Modal Close
+    document.getElementById('close-share').onclick = () => toggleActive('share-modal', false);
+    document.getElementById('copy-link-btn').onclick = () => {
+        const urlInput = document.getElementById('share-url');
+        urlInput.select();
+        document.execCommand('copy');
+        showToast('Link disalin ke papan klip');
+    };
+
+    // Logo Click Handler
+    const logo = document.querySelector('.logo');
+    if (logo) {
+        logo.onclick = (e) => {
+            e.preventDefault();
+            loadTrending();
+            setActiveNav(document.querySelector('.nav-item:first-child'));
+            document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
+            document.querySelector('.sidebar-item:first-child').classList.add('active');
+        };
+    }
+
+    // Voice Search
+    const micBtn = document.querySelector('.mic-btn');
+    if (micBtn) {
+        micBtn.onclick = openVoiceSearch;
+    }
+    document.getElementById('close-voice').onclick = () => toggleActive('voice-search-modal', false);
+
+    // Cast
+    const castBtn = document.getElementById('cast-btn');
+    if (castBtn) {
+        castBtn.onclick = () => {
+            toggleActive('cast-sheet', true);
+            toggleActive('sheet-overlay', true);
+        };
+    }
+    document.getElementById('close-cast').onclick = () => {
+        toggleActive('cast-sheet', false);
+        toggleActive('sheet-overlay', false);
+    };
+
     // Mobile Search Toggle
     const mobileSearchBtn = document.getElementById('mobile-search-btn');
     const mobileSearchBack = document.getElementById('mobile-search-back');
@@ -180,7 +235,7 @@ function renderVideos(videos, append = false) {
                 <img src="${video.thumbnail}" alt="${video.title}" loading="lazy">
             </div>
             <div class="video-details">
-                <div class="channel-avatar" style="background-color: ${stringToColor(video.channel)}">
+                <div class="channel-avatar" style="background-color: ${stringToColor(video.channel)}" onclick="event.stopPropagation(); openChannel('${video.channelId}', '${video.channel}')">
                     ${video.channel.charAt(0)}
                 </div>
                 <div class="video-info">
@@ -310,22 +365,22 @@ function openVideo(video, fromPopState = false) {
         </div>
 
         <div class="actions-bar">
-            <div class="action-item" onclick="toggleAction(this)">
+            <div class="action-item" onclick="toggleLike(this, 'like')">
                 <svg height="24" viewBox="0 0 24 24" width="24" fill="white"><path d="M1 21h4V9H1v12zm22-11c0-1.1-.9-2-2-2h-6.31l.95-4.57.03-.32c0-.41-.17-.79-.44-1.06L14.17 1 7.59 7.59C7.22 7.95 7 8.45 7 9v10c0 1.1.9 2 2 2h9c.83 0 1.54-.5 1.84-1.22l3.02-7.05c.09-.23.14-.47.14-.73v-2z"></path></svg>
-                <span>42 rb</span>
+                <span id="like-count">42 rb</span>
             </div>
-            <div class="action-item">
+            <div class="action-item" onclick="toggleLike(this, 'dislike')">
                 <svg height="24" viewBox="0 0 24 24" width="24" fill="white"><path d="M15 3H6c-.83 0-1.54.5-1.84 1.22l-3.02 7.05c-.09.23-.14.47-.14.73v2c0 1.1.9 2 2 2h6.31l-.95 4.57-.03.32c0 .41.17.79.44 1.06L9.83 23l6.59-6.59c.37-.36.58-.86.58-1.41V5c0-1.1-.9-2-2-2zm4 0v12h4V3h-4z"></path></svg>
             </div>
-            <div class="action-item">
+            <div class="action-item" onclick="openShare()">
                 <svg height="24" viewBox="0 0 24 24" width="24" fill="white"><path d="M11.73 3L5.83 21h2.09l1.49-4.5h6.18l1.49 4.5h2.09L13.27 3h-1.54zm-1.54 11.5L12.5 7.33 14.81 14.5h-4.62z"></path></svg>
                 <span>Bagikan</span>
             </div>
-            <div class="action-item">
+            <div class="action-item" onclick="mockRemix()">
                 <svg height="24" viewBox="0 0 24 24" width="24" fill="white"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"></path></svg>
                 <span>Remix</span>
             </div>
-            <div class="action-item">
+            <div class="action-item" onclick="toggleSave(this)">
                 <svg height="24" viewBox="0 0 24 24" width="24" fill="white"><path d="M16.5 3c-1.74 0-3.41.81-4.5 2.09C10.91 3.81 9.24 3 7.5 3 4.42 3 2 5.42 2 8.5c0 3.78 3.4 6.86 8.55 11.54L12 21.35l1.45-1.32C18.6 15.36 22 12.28 22 8.5 22 5.42 19.58 3 16.5 3zm-4.4 15.55l-.1.1-.1-.1C7.14 14.24 4 11.39 4 8.5c0-1.76 1.24-3 3-3 1.54 0 3.04.99 3.57 2.36h1.87C12.96 6.49 14.46 5.5 16 5.5c1.76 0 3 1.24 3 3 0 2.89-3.14 5.74-7.9 10.05z"></path></svg>
                 <span>Simpan</span>
             </div>
@@ -527,12 +582,37 @@ document.querySelectorAll('.filter-option').forEach(opt => {
         const parent = this.parentElement;
         parent.querySelectorAll('.filter-option').forEach(o => o.classList.remove('active'));
         this.classList.add('active');
-        showToast(`Filter diterapkan: ${this.innerText}`);
-        // In a real app, we would re-fetch with sort params
-        if (currentQuery) fetchVideos(currentQuery);
+        const filterType = this.innerText;
+        showToast(`Mengurutkan berdasarkan: ${filterType}`);
+
+        applySearchFilter(filterType);
         closeAllOverlays();
     };
 });
+
+function applySearchFilter(type) {
+    // This is a mock implementation that sorts the current results
+    // In a real app, this would be a new API call
+    const currentResultsGrid = resultsGrid.querySelector('.search-list, .grid');
+    if (!currentResultsGrid) return;
+
+    const cards = Array.from(currentResultsGrid.children);
+    if (cards.length <= 1) return;
+
+    if (type === 'Jumlah Tayangan') {
+        cards.sort((a, b) => {
+            const vA = parseFloat(a.querySelector('.video-meta').innerText) || 0;
+            const vB = parseFloat(b.querySelector('.video-meta').innerText) || 0;
+            return vB - vA;
+        });
+    } else if (type === 'Tanggal Unggah') {
+        // Just reverse them to simulate "newest"
+        cards.reverse();
+    }
+
+    currentResultsGrid.innerHTML = '';
+    cards.forEach(c => currentResultsGrid.appendChild(c));
+}
 
 sheetOverlay.onclick = () => {
     closeAllOverlays();
@@ -545,6 +625,10 @@ function closeAllOverlays() {
     toggleActive('comments-overlay', false);
     toggleActive('notification-overlay', false);
     toggleActive('channel-view', false);
+    toggleActive('voice-search-modal', false);
+    toggleActive('cast-sheet', false);
+    toggleActive('share-modal', false);
+    toggleActive('upload-overlay', false);
     document.getElementById('video-modal').classList.remove('active');
     document.getElementById('login-modal').classList.remove('active');
 
@@ -585,25 +669,53 @@ function openChannel(channelId, channelName, fromPopState = false) {
     videosContainer.innerHTML = '<div class="loading">Memuat video channel...</div>';
 
     fetchVideosByChannel(channelId).then(videos => {
-        videosContainer.innerHTML = '';
-        videos.forEach(video => {
-            const card = document.createElement('div');
-            card.className = 'card';
-            card.innerHTML = `
-                <div class="thumbnail-container">
-                    <img src="${video.thumbnail}">
-                </div>
-                <div class="video-details">
-                    <div class="video-info">
-                        <h3 class="video-title">${video.title}</h3>
-                        <p class="video-meta">${video.views} x ditonton • ${video.time}</p>
-                    </div>
-                </div>
-            `;
-            card.onclick = () => openVideo(video.id);
-            videosContainer.appendChild(card);
+        renderChannelVideos(videos);
+
+        // Setup Tabs
+        document.querySelectorAll('.channel-tab').forEach(tab => {
+            tab.onclick = function() {
+                document.querySelectorAll('.channel-tab').forEach(t => t.classList.remove('active'));
+                this.classList.add('active');
+                const type = this.innerText;
+
+                if (type === 'Shorts') {
+                    renderChannelVideos(videos.filter(v => v.title.toLowerCase().includes('short')));
+                } else if (type === 'Live') {
+                    renderChannelVideos(videos.filter(v => v.title.toLowerCase().includes('live')));
+                } else {
+                    renderChannelVideos(videos);
+                }
+            };
         });
     }, 600);
+}
+
+function renderChannelVideos(videos) {
+    const videosContainer = document.getElementById('channel-videos');
+    videosContainer.innerHTML = '';
+
+    if (videos.length === 0) {
+        videosContainer.innerHTML = '<p style="padding: 40px; text-align: center; color: var(--text-secondary); grid-column: 1/-1;">Belum ada konten di kategori ini.</p>';
+        return;
+    }
+
+    videos.forEach(video => {
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.innerHTML = `
+            <div class="thumbnail-container">
+                <img src="${video.thumbnail}">
+            </div>
+            <div class="video-details">
+                <div class="video-info">
+                    <h3 class="video-title">${video.title}</h3>
+                    <p class="video-meta">${video.views} x ditonton • ${video.time}</p>
+                </div>
+            </div>
+        `;
+        card.onclick = () => openVideo(video);
+        videosContainer.appendChild(card);
+    });
 }
 
 document.getElementById('close-channel').onclick = () => {
@@ -942,6 +1054,128 @@ function toggleAction(btn) {
     btn.classList.toggle('active');
 }
 
+function toggleLike(btn, type) {
+    const isAlreadyActive = btn.classList.contains('active');
+    const actionsBar = btn.parentElement;
+    const likeBtn = actionsBar.children[0];
+    const dislikeBtn = actionsBar.children[1];
+    const likeCountSpan = document.getElementById('like-count');
+
+    let count = parseInt(likeCountSpan.innerText) || 42;
+
+    if (type === 'like') {
+        dislikeBtn.classList.remove('active');
+        if (isAlreadyActive) {
+            btn.classList.remove('active');
+            likeCountSpan.innerText = `${count} rb`;
+        } else {
+            btn.classList.add('active');
+            likeCountSpan.innerText = `${count + 1} rb`;
+            showToast('Anda menyukai video ini');
+        }
+    } else {
+        likeBtn.classList.remove('active');
+        if (isAlreadyActive) {
+            btn.classList.remove('active');
+        } else {
+            btn.classList.add('active');
+            showToast('Video ini tidak disukai');
+        }
+    }
+}
+
+function openShare() {
+    toggleActive('share-modal', true);
+    if (lastVideo) {
+        document.getElementById('share-url').value = `https://playtube.com/v/${lastVideo.id}`;
+    }
+}
+
+function mockShare(platform) {
+    showToast(`Membuka ${platform}...`);
+    setTimeout(() => {
+        toggleActive('share-modal', false);
+        showToast(`Berhasil dibagikan ke ${platform}`);
+    }, 1500);
+}
+
+function mockRemix() {
+    showToast('Membuka editor Remix...');
+    setTimeout(() => {
+        showToast('Fitur Remix akan segera hadir!');
+    }, 2000);
+}
+
+function mockCreateShort() {
+    toggleActive('create-sheet', false);
+    toggleActive('sheet-overlay', false);
+    showToast('Membuka kamera Shorts...');
+    setTimeout(() => {
+        showToast('Izinkan akses kamera untuk melanjutkan.');
+    }, 1500);
+}
+
+function openUpload() {
+    toggleActive('create-sheet', false);
+    toggleActive('sheet-overlay', false);
+    toggleActive('upload-overlay', true);
+    document.getElementById('upload-idle').style.display = 'flex';
+    document.getElementById('upload-progress').style.display = 'none';
+}
+
+function handleFileUpload(e) {
+    if (!e.target.files.length) return;
+    const file = e.target.files[0];
+
+    document.getElementById('upload-idle').style.display = 'none';
+    document.getElementById('upload-progress').style.display = 'flex';
+
+    const fill = document.getElementById('upload-fill');
+    const status = document.getElementById('upload-status');
+    let progress = 0;
+
+    const interval = setInterval(() => {
+        progress += Math.random() * 15;
+        if (progress >= 100) {
+            progress = 100;
+            clearInterval(interval);
+            showToast('Video berhasil diupload!');
+            setTimeout(() => {
+                toggleActive('upload-overlay', false);
+                loadTrending();
+            }, 1000);
+        }
+        fill.style.width = `${progress}%`;
+        status.innerText = `${Math.floor(progress)}% selesai`;
+    }, 400);
+}
+
+function mockLive() {
+    toggleActive('create-sheet', false);
+    toggleActive('sheet-overlay', false);
+    showToast('Menyiapkan siaran langsung...');
+    setTimeout(() => {
+        showToast('Koneksi tidak stabil, coba lagi nanti.');
+    }, 3000);
+}
+
+function toggleSave(btn) {
+    const isSaved = btn.classList.toggle('active');
+    if (isSaved) {
+        showToast('Disimpan ke Tonton Nanti');
+        if (lastVideo) {
+            savedVideos.push(lastVideo);
+            localStorage.setItem('playtube_saved', JSON.stringify(savedVideos));
+        }
+    } else {
+        showToast('Dihapus dari Tonton Nanti');
+        if (lastVideo) {
+            savedVideos = savedVideos.filter(v => v.id !== lastVideo.id);
+            localStorage.setItem('playtube_saved', JSON.stringify(savedVideos));
+        }
+    }
+}
+
 async function fetchVideosByChannel(channelId) {
     try {
         // We don't have a direct channel endpoint in server.js yet, but we can search for channel videos
@@ -1022,8 +1256,8 @@ function loadAnda() {
             </div>
         </div>
         <div class="sidebar-section">
-            <div class="anda-menu-item"><svg height="24" viewBox="0 0 24 24" width="24" fill="white"><path d="M10 18v-6l5 3-5 3zm7-15H7v1h10V3zm3 3H4v1h16V6zm2 3H2v12h20V9zM3 10h18v10H3V10z"></path></svg> Video Anda</div>
-            <div class="anda-menu-item"><svg height="24" viewBox="0 0 24 24" width="24" fill="white"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"></path></svg> Hasil download</div>
+            <div class="anda-menu-item" onclick="loadUserVideos()"><svg height="24" viewBox="0 0 24 24" width="24" fill="white"><path d="M10 18v-6l5 3-5 3zm7-15H7v1h10V3zm3 3H4v1h16V6zm2 3H2v12h20V9zM3 10h18v10H3V10z"></path></svg> Video Anda</div>
+            <div class="anda-menu-item" onclick="loadDownloads()"><svg height="24" viewBox="0 0 24 24" width="24" fill="white"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"></path></svg> Hasil download</div>
             <div class="anda-menu-item" onclick="logout()"><svg height="24" viewBox="0 0 24 24" width="24" fill="white"><path d="M20 3v18H8v-1h11V4H8V3h12zm-3 8.5l-4-4v3H2v2h11v3l4-4z"></path></svg> Logout</div>
         </div>
     `;
@@ -1043,6 +1277,33 @@ function loadAnda() {
     } else {
         list.innerHTML = '<p style="padding: 10px; color: #aaa;">Belum ada riwayat tontonan</p>';
     }
+}
+
+function loadUserVideos() {
+    currentCategory = 'user_videos';
+    resultsGrid.innerHTML = `
+        <div class="anda-section-header" style="padding: 16px;">Video Anda</div>
+        <div class="empty-home-container" style="min-height: 40vh;">
+            <div class="empty-home-icon"><svg height="64" viewBox="0 0 24 24" width="64" fill="currentColor"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"></path></svg></div>
+            <div class="empty-home-title">Belum ada video</div>
+            <p style="color: var(--text-secondary); margin-bottom: 24px;">Tap tombol buat untuk mulai berbagi video dengan orang lain.</p>
+            <button class="chip active" onclick="openUpload()">Upload Video</button>
+        </div>
+    `;
+    window.scrollTo(0, 0);
+}
+
+function loadDownloads() {
+    currentCategory = 'downloads';
+    resultsGrid.innerHTML = `
+        <div class="anda-section-header" style="padding: 16px;">Hasil download</div>
+        <div class="empty-home-container" style="min-height: 40vh;">
+            <div class="empty-home-icon"><svg height="64" viewBox="0 0 24 24" width="64" fill="currentColor"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"></path></svg></div>
+            <div class="empty-home-title">Tidak ada hasil download</div>
+            <p style="color: var(--text-secondary);">Video yang Anda download akan muncul di sini.</p>
+        </div>
+    `;
+    window.scrollTo(0, 0);
 }
 
 function logout() {
@@ -1120,8 +1381,16 @@ function loadSubscriptions() {
 }
 
 function setActiveNav(el) {
-    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    document.querySelectorAll('.nav-item, .sidebar-item').forEach(n => n.classList.remove('active'));
     el.classList.add('active');
+
+    // Also sync between mobile nav and desktop sidebar if possible
+    const text = el.querySelector('span').innerText;
+    document.querySelectorAll('.nav-item, .sidebar-item').forEach(item => {
+        if (item.querySelector('span') && item.querySelector('span').innerText === text) {
+            item.classList.add('active');
+        }
+    });
 }
 
 function toggleActive(id, show) {
@@ -1129,4 +1398,33 @@ function toggleActive(id, show) {
     if (!el) return;
     if (show) el.classList.add('active');
     else el.classList.remove('active');
+}
+
+// Global functional handlers
+function openVoiceSearch() {
+    toggleActive('voice-search-modal', true);
+    const status = document.getElementById('voice-status');
+    status.innerText = 'Mendengarkan...';
+
+    setTimeout(() => {
+        status.innerText = 'Mencoba mengenali...';
+        setTimeout(() => {
+            const mockQueries = ['Lagu Pop Terbaru', 'Tutorial Memasak', 'Playtube Features', 'Kucing Lucu'];
+            const randomQuery = mockQueries[Math.floor(Math.random() * mockQueries.length)];
+            status.innerText = `"${randomQuery}"`;
+            setTimeout(() => {
+                toggleActive('voice-search-modal', false);
+                searchInput.value = randomQuery;
+                fetchVideos(randomQuery);
+            }, 1000);
+        }, 1500);
+    }, 2000);
+}
+
+function connectToDevice(deviceName) {
+    showToast(`Menghubungkan ke ${deviceName}...`);
+    setTimeout(() => {
+        showToast(`Berhasil terhubung ke ${deviceName}`);
+        closeAllOverlays();
+    }, 2000);
 }

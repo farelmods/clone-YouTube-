@@ -1429,7 +1429,7 @@ iframe {
     border-color: var(--primary-color);
 }
 
-.login-card .submit-btn {
+.login-card .submit-btn, .upload-submit-btn {
     width: 100%;
     padding: 12px;
     background-color: var(--primary-color);
@@ -1441,7 +1441,7 @@ iframe {
     font-size: 16px;
 }
 
-.login-card .submit-btn:hover {
+.login-card .submit-btn:hover, .upload-submit-btn:hover {
     background-color: var(--primary-hover);
 }
 
@@ -2000,4 +2000,200 @@ iframe {
 .filter-option.active {
     color: var(--primary-color);
     font-weight: bold;
+}
+
+/* Voice Search Modal */
+.voice-search-card {
+    text-align: center;
+    padding: 40px;
+    width: 100%;
+    max-width: 500px;
+}
+
+.voice-search-status {
+    font-size: 24px;
+    margin-bottom: 40px;
+}
+
+.mic-animation {
+    position: relative;
+    width: 120px;
+    height: 120px;
+    margin: 0 auto 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--primary-color);
+    border-radius: 50%;
+    box-shadow: 0 0 20px var(--primary-glow);
+}
+
+.mic-wave {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    border: 2px solid var(--primary-color);
+    animation: mic-wave-anim 2s infinite;
+    opacity: 0;
+}
+
+.mic-wave:nth-child(2) { animation-delay: 0.5s; }
+.mic-wave:nth-child(3) { animation-delay: 1s; }
+
+@keyframes mic-wave-anim {
+    0% { transform: scale(1); opacity: 0.8; }
+    100% { transform: scale(2.5); opacity: 0; }
+}
+
+.voice-search-hint {
+    color: var(--text-secondary);
+    font-size: 14px;
+}
+
+/* Device List for Cast */
+.device-list {
+    padding: 16px;
+}
+
+.device-item {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px;
+    cursor: pointer;
+    border-radius: 12px;
+}
+
+.device-item:hover { background: var(--hover-bg); }
+.device-item.hint { color: var(--text-secondary); font-size: 14px; cursor: default; }
+
+/* Share Modal */
+.share-card {
+    background: #212121;
+    border-radius: 16px;
+    width: 90%;
+    max-width: 400px;
+    padding: 24px;
+}
+
+.share-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    font-weight: bold;
+}
+
+.share-options {
+    display: flex;
+    gap: 20px;
+    overflow-x: auto;
+    padding-bottom: 16px;
+    margin-bottom: 24px;
+    scrollbar-width: none;
+}
+
+.share-option {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    min-width: 70px;
+    cursor: pointer;
+}
+
+.share-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: bold;
+    font-size: 20px;
+}
+
+.share-option span { font-size: 12px; }
+
+.copy-link-container {
+    display: flex;
+    background: #121212;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.copy-link-container input {
+    background: none;
+    border: none;
+    color: white;
+    padding: 12px;
+    flex-grow: 1;
+    font-size: 14px;
+    outline: none;
+}
+
+.copy-link-container button {
+    background: var(--primary-color);
+    border: none;
+    color: white;
+    padding: 0 16px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+/* Upload Progress */
+.upload-container {
+    padding: 24px;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.upload-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 40px;
+}
+
+.upload-content {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+}
+
+.upload-circle {
+    width: 120px;
+    height: 120px;
+    background: var(--hover-bg);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 24px;
+}
+
+.upload-content h3 { margin-bottom: 12px; }
+.upload-content p { color: var(--text-secondary); margin-bottom: 32px; max-width: 300px; }
+
+.progress-container {
+    width: 100%;
+    max-width: 400px;
+    height: 4px;
+    background: var(--border-color);
+    margin: 24px 0 12px;
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    background: var(--primary-color);
+    width: 0%;
+    transition: width 0.3s;
 }
