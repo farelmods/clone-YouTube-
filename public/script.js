@@ -29,6 +29,20 @@ let localComments = JSON.parse(localStorage.getItem('playtube_comments') || '{}'
 let likedVideos = JSON.parse(localStorage.getItem('playtube_liked') || '[]');
 let savedVideos = JSON.parse(localStorage.getItem('playtube_saved') || '[]');
 
+// Supabase Configuration (Replace with your actual credentials)
+const SUPABASE_URL = 'https://your-project-url.supabase.co';
+const SUPABASE_ANON_KEY = 'your-anon-key';
+let supabaseClient = null;
+
+if (typeof supabasejs !== 'undefined' || typeof Supabase !== 'undefined') {
+    const createClient = (typeof supabasejs !== 'undefined') ? supabasejs.createClient : Supabase.createClient;
+    try {
+        supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    } catch(e) {
+        console.warn("Supabase not configured correctly. Check SETUP_GUIDE.md");
+    }
+}
+
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
     // Create Sheet Actions
@@ -51,6 +65,12 @@ document.addEventListener('DOMContentLoaded', () => {
         document.execCommand('copy');
         showToast('Link disalin ke papan klip');
     };
+
+    // Google Login Handler
+    const googleLoginBtn = document.getElementById('google-login-btn');
+    if (googleLoginBtn) {
+        googleLoginBtn.onclick = loginWithGoogle;
+    }
 
     // Logo Click Handler
     const logo = document.querySelector('.logo');
@@ -230,30 +250,46 @@ function renderVideos(videos, append = false) {
         const card = document.createElement('div');
         card.className = currentQuery ? 'card horizontal' : 'card';
 
-        card.innerHTML = `
-            <div class="thumbnail-container">
-                <img src="${video.thumbnail}" alt="${video.title}" loading="lazy">
-            </div>
-            <div class="video-details">
-                <div class="channel-avatar" style="background-color: ${stringToColor(video.channel)}" onclick="event.stopPropagation(); openChannel('${video.channelId}', '${video.channel}')">
-                    ${video.channel.charAt(0)}
+        if (currentQuery) {
+            // Search result layout
+            card.innerHTML = `
+                <div class="thumbnail-container">
+                    <img src="${video.thumbnail}" alt="${video.title}" loading="lazy">
                 </div>
-                <div class="video-info">
-                    <h3 class="video-title">${video.title}</h3>
-                    <div class="channel-info-row" onclick="event.stopPropagation(); openChannel('${video.channelId}', '${video.channel}')">
-                        <div class="channel-avatar-small mobile-only" style="background-color: ${stringToColor(video.channel)}">
-                            ${video.channel.charAt(0)}
+                <div class="video-details">
+                    <div class="video-info">
+                        <h3 class="video-title">${video.title}</h3>
+                        <p class="video-meta">${video.views} x ditonton • ${video.time}</p>
+                        <div class="channel-info-row" onclick="event.stopPropagation(); openChannel('${video.channelId}', '${video.channel}')">
+                            <div class="channel-avatar-small" style="background-color: ${stringToColor(video.channel)}">
+                                ${video.channel.charAt(0)}
+                            </div>
+                            <p class="channel-name">${video.channel} ${video.verified ? '<i class="fas fa-check-circle verified-badge"></i>' : ''}</p>
                         </div>
-                        <p class="channel-name">${video.channel} ${video.verified ? '<svg height="12" viewBox="0 0 24 24" width="12" fill="#aaa"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"></path></svg>' : ''}</p>
+                        <p class="video-description">${video.description || ''}</p>
                     </div>
-                    <p class="video-meta">${video.views} x ditonton • ${video.time}</p>
-                    <p class="video-description">${video.description || ''}</p>
                 </div>
-                <button class="icon-btn mobile-only" style="margin-left: auto;">
-                    <svg height="24" viewBox="0 0 24 24" width="24" fill="white"><path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"></path></svg>
-                </button>
-            </div>
-        `;
+            `;
+        } else {
+            // Grid layout
+            card.innerHTML = `
+                <div class="thumbnail-container">
+                    <img src="${video.thumbnail}" alt="${video.title}" loading="lazy">
+                </div>
+                <div class="video-details">
+                    <div class="channel-avatar" style="background-color: ${stringToColor(video.channel)}" onclick="event.stopPropagation(); openChannel('${video.channelId}', '${video.channel}')">
+                        ${video.channel.charAt(0)}
+                    </div>
+                    <div class="video-info">
+                        <h3 class="video-title">${video.title}</h3>
+                        <div class="channel-info-row" onclick="event.stopPropagation(); openChannel('${video.channelId}', '${video.channel}')">
+                            <p class="channel-name">${video.channel} ${video.verified ? '<i class="fas fa-check-circle verified-badge"></i>' : ''}</p>
+                        </div>
+                        <p class="video-meta">${video.views} x ditonton • ${video.time}</p>
+                    </div>
+                </div>
+            `;
+        }
 
         card.onclick = () => openVideo(video);
         currentGrid.appendChild(card);
@@ -376,9 +412,9 @@ function openVideo(video, fromPopState = false) {
                 <svg height="24" viewBox="0 0 24 24" width="24" fill="white"><path d="M11.73 3L5.83 21h2.09l1.49-4.5h6.18l1.49 4.5h2.09L13.27 3h-1.54zm-1.54 11.5L12.5 7.33 14.81 14.5h-4.62z"></path></svg>
                 <span>Bagikan</span>
             </div>
-            <div class="action-item" onclick="mockRemix()">
-                <svg height="24" viewBox="0 0 24 24" width="24" fill="white"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"></path></svg>
-                <span>Remix</span>
+            <div class="action-item" onclick="downloadVideo()">
+                <svg height="24" viewBox="0 0 24 24" width="24" fill="white"><path d="M17 18v1H6v-1h11zm-5.5-3.1l-3.3-3.3.7-.7 2.1 2.1V4h1v9l2.1-2.1.7.7-3.3 3.3z"></path></svg>
+                <span>Download</span>
             </div>
             <div class="action-item" onclick="toggleSave(this)">
                 <svg height="24" viewBox="0 0 24 24" width="24" fill="white"><path d="M16.5 3c-1.74 0-3.41.81-4.5 2.09C10.91 3.81 9.24 3 7.5 3 4.42 3 2 5.42 2 8.5c0 3.78 3.4 6.86 8.55 11.54L12 21.35l1.45-1.32C18.6 15.36 22 12.28 22 8.5 22 5.42 19.58 3 16.5 3zm-4.4 15.55l-.1.1-.1-.1C7.14 14.24 4 11.39 4 8.5c0-1.76 1.24-3 3-3 1.54 0 3.04.99 3.57 2.36h1.87C12.96 6.49 14.46 5.5 16 5.5c1.76 0 3 1.24 3 3 0 2.89-3.14 5.74-7.9 10.05z"></path></svg>
@@ -770,9 +806,22 @@ function renderNotifications() {
 }
 
 // Comments
-function openComments() {
+async function openComments() {
     toggleActive('comments-overlay', true);
-    renderComments();
+    const list = document.getElementById('comments-list');
+    list.innerHTML = '<div class="loading">Memuat komentar...</div>';
+
+    if (!lastVideo) return;
+    const videoId = typeof lastVideo === 'string' ? lastVideo : lastVideo.id;
+
+    try {
+        const response = await fetch(`/api/comments?videoId=${videoId}`);
+        const data = await response.json();
+        renderComments(data.items || []);
+    } catch (err) {
+        console.error("Fetch comments error:", err);
+        renderComments([]);
+    }
 }
 document.getElementById('close-comments').onclick = () => {
     toggleActive('comments-overlay', false);
@@ -813,34 +862,53 @@ function submitComment() {
     updateCommentPreview();
 }
 
-function renderComments() {
+function renderComments(apiComments = []) {
     const list = document.getElementById('comments-list');
     if (!lastVideo) return;
     const videoId = typeof lastVideo === 'string' ? lastVideo : lastVideo.id;
 
     const videoComments = localComments[videoId] || [];
-    const mockComments = [1,2,3,4,5].map(i => ({
-        user: `user_${i}`,
-        text: 'Wah konten ini sangat bermanfaat bagi nusa dan bangsa. Lanjutkan!',
-        time: `${i} jam yang lalu`,
-        avatarColor: stringToColor('Commenter '+i)
+
+    // Normalize local comments to match API structure
+    const normalizedLocal = videoComments.map(c => ({
+        snippet: {
+            topLevelComment: {
+                snippet: {
+                    authorDisplayName: c.user,
+                    textDisplay: c.text,
+                    publishedAt: new Date().toISOString(),
+                    authorProfileImageUrl: null,
+                    avatarColor: c.avatarColor
+                }
+            }
+        }
     }));
 
-    const allComments = [...videoComments, ...mockComments];
+    const allComments = [...normalizedLocal, ...apiComments];
 
-    list.innerHTML = allComments.map(c => `
-        <div class="comment-item">
-            <div class="comment-avatar" style="background-color: ${c.avatarColor}">${c.user.charAt(0)}</div>
-            <div class="comment-body">
-                <div class="comment-user">@${c.user} <span class="comment-time">${c.time}</span></div>
-                <div class="comment-text">${c.text}</div>
-                <div class="comment-actions">
-                    <span><svg height="16" viewBox="0 0 24 24" width="16" fill="currentColor"><path d="M1 21h4V9H1v12zm22-11c0-1.1-.9-2-2-2h-6.31l.95-4.57.03-.32c0-.41-.17-.79-.44-1.06L14.17 1 7.59 7.59C7.22 7.95 7 8.45 7 9v10c0 1.1.9 2 2 2h9c.83 0 1.54-.5 1.84-1.22l3.02-7.05c.09-.23.14-.47.14-.73v-2z"></path></svg></span>
-                    <span>Balas</span>
+    if (allComments.length === 0) {
+        list.innerHTML = '<p style="padding: 20px; text-align: center; color: #aaa;">Belum ada komentar.</p>';
+        return;
+    }
+
+    list.innerHTML = allComments.map(item => {
+        const c = item.snippet.topLevelComment.snippet;
+        const avatar = c.authorProfileImageUrl ? `<img src="${c.authorProfileImageUrl}" class="comment-avatar">` : `<div class="comment-avatar" style="background-color: ${c.avatarColor || '#9d4edd'}">${c.authorDisplayName.charAt(0)}</div>`;
+
+        return `
+            <div class="comment-item">
+                ${avatar}
+                <div class="comment-body">
+                    <div class="comment-user">@${c.authorDisplayName} <span class="comment-time">${timeAgo(c.publishedAt)}</span></div>
+                    <div class="comment-text">${c.textDisplay}</div>
+                    <div class="comment-actions">
+                        <span><svg height="16" viewBox="0 0 24 24" width="16" fill="currentColor"><path d="M1 21h4V9H1v12zm22-11c0-1.1-.9-2-2-2h-6.31l.95-4.57.03-.32c0-.41-.17-.79-.44-1.06L14.17 1 7.59 7.59C7.22 7.95 7 8.45 7 9v10c0 1.1.9 2 2 2h9c.83 0 1.54-.5 1.84-1.22l3.02-7.05c.09-.23.14-.47.14-.73v-2z"></path></svg></span>
+                        <span>Balas</span>
+                    </div>
                 </div>
             </div>
-        </div>
-    `).join('');
+        `;
+    }).join('');
 }
 
 function updateCommentPreview() {
@@ -861,10 +929,42 @@ const closeLogin = document.getElementById('close-login');
 const loginForm = document.getElementById('login-form');
 const headerLoginBtn = document.getElementById('header-login-btn');
 
-function checkLoginState() {
+async function checkLoginState() {
+    if (supabaseClient) {
+        const { data: { session }, error } = await supabaseClient.auth.getSession();
+        if (session) {
+            currentUser = {
+                name: session.user.user_metadata.full_name || session.user.email.split('@')[0],
+                email: session.user.email,
+                avatar: session.user.user_metadata.avatar_url
+            };
+            localStorage.setItem('playtube_user', JSON.stringify(currentUser));
+            loginModal.classList.remove('active');
+            return;
+        }
+    }
+
     if (!currentUser) {
         loginModal.classList.add('active');
         if (closeLogin) closeLogin.style.display = 'none';
+    }
+}
+
+async function loginWithGoogle() {
+    if (!supabaseClient) {
+        showToast('Supabase tidak terkonfigurasi. Gunakan login simulasi.');
+        return;
+    }
+
+    const { data, error } = await supabaseClient.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+            redirectTo: window.location.origin
+        }
+    });
+
+    if (error) {
+        showToast('Gagal login: ' + error.message);
     }
 }
 
@@ -1099,11 +1199,11 @@ function mockShare(platform) {
     }, 1500);
 }
 
-function mockRemix() {
-    showToast('Membuka editor Remix...');
-    setTimeout(() => {
-        showToast('Fitur Remix akan segera hadir!');
-    }, 2000);
+function downloadVideo() {
+    if (!lastVideo) return;
+    const videoId = typeof lastVideo === 'string' ? lastVideo : lastVideo.id;
+    showToast('Menyiapkan download...');
+    window.location.href = `/api/download?videoId=${videoId}`;
 }
 
 function mockCreateShort() {
@@ -1126,28 +1226,52 @@ function openUpload() {
 function handleFileUpload(e) {
     if (!e.target.files.length) return;
     const file = e.target.files[0];
+    const title = document.getElementById('upload-title').value || file.name;
+    const desc = document.getElementById('upload-desc').value || '';
 
     document.getElementById('upload-idle').style.display = 'none';
     document.getElementById('upload-progress').style.display = 'flex';
 
     const fill = document.getElementById('upload-fill');
     const status = document.getElementById('upload-status');
-    let progress = 0;
 
-    const interval = setInterval(() => {
-        progress += Math.random() * 15;
-        if (progress >= 100) {
-            progress = 100;
-            clearInterval(interval);
-            showToast('Video berhasil diupload!');
-            setTimeout(() => {
-                toggleActive('upload-overlay', false);
-                loadTrending();
-            }, 1000);
-        }
-        fill.style.width = `${progress}%`;
-        status.innerText = `${Math.floor(progress)}% selesai`;
-    }, 400);
+    const formData = new FormData();
+    formData.append('video', file);
+    formData.append('title', title);
+    formData.append('description', desc);
+
+    try {
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', '/api/upload', true);
+
+        xhr.upload.onprogress = (event) => {
+            if (event.lengthComputable) {
+                const percent = (event.loaded / event.total) * 100;
+                fill.style.width = `${percent}%`;
+                status.innerText = `${Math.floor(percent)}% selesai`;
+            }
+        };
+
+        xhr.onload = () => {
+            if (xhr.status === 200) {
+                showToast('Video berhasil diupload ke YouTube!');
+                setTimeout(() => {
+                    toggleActive('upload-overlay', false);
+                    document.getElementById('upload-title').value = '';
+                    document.getElementById('upload-desc').value = '';
+                    loadTrending();
+                }, 1500);
+            } else {
+                showToast('Upload gagal: ' + xhr.responseText);
+                document.getElementById('upload-idle').style.display = 'flex';
+                document.getElementById('upload-progress').style.display = 'none';
+            }
+        };
+
+        xhr.send(formData);
+    } catch (err) {
+        showToast('Kesalahan koneksi saat upload');
+    }
 }
 
 function mockLive() {
@@ -1306,7 +1430,10 @@ function loadDownloads() {
     window.scrollTo(0, 0);
 }
 
-function logout() {
+async function logout() {
+    if (supabaseClient) {
+        await supabaseClient.auth.signOut();
+    }
     currentUser = null;
     localStorage.removeItem('playtube_user');
     location.reload();

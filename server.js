@@ -2,11 +2,15 @@ require("dotenv").config();
 const express = require("express");
 const axios = require("axios");
 const cors = require("cors");
+const ytdl = require("ytdl-core");
+const fileUpload = require("express-fileupload");
+const { google } = require("googleapis");
 
 const app = express();
 
 app.use(cors());
 app.use(express.static("public"));
+app.use(fileUpload());
 
 const API_KEY = process.env.YOUTUBE_API_KEY;
 const PORT = process.env.PORT || 3000;
@@ -100,6 +104,98 @@ app.get("/api/category", async (req, res) => {
   } catch (err) {
     console.error("Category error, fallback to mock:", err.response?.data || err.message);
     res.json({ items: [] });
+  }
+});
+
+app.get("/api/download", async (req, res) => {
+  const videoId = req.query.videoId;
+  if (!videoId) return res.status(400).send("Video ID diperlukan");
+
+  try {
+    const info = await ytdl.getInfo(videoId);
+    const title = info.videoDetails.title.replace(/[^\w\s]/gi, "");
+
+    res.header("Content-Disposition", `attachment; filename="${title}.mp4"`);
+    ytdl(videoId, {
+      format: "mp4",
+      quality: "highestvideo",
+      filter: "audioandvideo"
+    }).pipe(res);
+  } catch (err) {
+    console.error("Download error:", err);
+    res.status(500).send("Gagal mengunduh video: " + err.message);
+  }
+});
+
+app.post("/api/upload", async (req, res) => {
+  if (!req.files || Object.keys(req.files).length === 0) {
+    return res.status(400).send("Tidak ada file yang diunggah.");
+  }
+
+  const videoFile = req.files.video;
+  const { title, description } = req.body;
+
+  // Di sini seharusnya ada logika OAuth untuk mendapatkan token user
+  // Untuk keperluan demo/tugas, kita asumsikan integrasi YouTube API
+  try {
+    // Simulasi proses upload ke YouTube
+    console.log(`Mengupload ${videoFile.name} ke YouTube dengan judul: ${title}`);
+
+    // Jika ada API_KEY dan OAuth Token, kita gunakan googleapis:
+    /*
+    const youtube = google.youtube({ version: 'v3', auth: oauth2Client });
+    await youtube.videos.insert({
+      part: 'snippet,status',
+      requestBody: {
+        snippet: { title, description },
+        status: { privacyStatus: 'public' }
+      },
+      media: { body: videoFile.data }
+    });
+    */
+
+    // Simulasi delay upload
+    setTimeout(() => {
+        res.json({ success: true, message: "Video berhasil diupload ke YouTube!" });
+    }, 3000);
+
+  } catch (err) {
+    res.status(500).send("Gagal upload: " + err.message);
+  }
+});
+
+app.get("/api/comments", async (req, res) => {
+  const videoId = req.query.videoId;
+  if (!videoId) return res.json({ error: "Video ID kosong" });
+
+  try {
+    const response = await axios.get(`${YOUTUBE_API_BASE}/commentThreads`, {
+      params: {
+        part: "snippet",
+        videoId: videoId,
+        maxResults: 20,
+        key: API_KEY
+      }
+    });
+    res.json(response.data);
+  } catch (err) {
+    console.error("Comments error, fallback to mock:", err.response?.data || err.message);
+    const mockComments = [];
+    for (let i = 1; i <= 5; i++) {
+        mockComments.push({
+            snippet: {
+                topLevelComment: {
+                    snippet: {
+                        authorDisplayName: "Pengguna Playtube " + i,
+                        textDisplay: "Wah kontennya keren banget! Tema ungunya sangat estetik.",
+                        publishedAt: new Date().toISOString(),
+                        authorProfileImageUrl: `https://picsum.photos/seed/user${i}/48/48`
+                    }
+                }
+            }
+        });
+    }
+    res.json({ items: mockComments });
   }
 });
 

@@ -5,7 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Playtube</title>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
 <div id="progress-bar"></div>
@@ -392,7 +394,11 @@
             </div>
             <h3>Pilih file untuk diupload</h3>
             <p>Video Anda akan bersifat pribadi sampai Anda mempublikasikannya.</p>
-            <button class="upload-submit-btn" onclick="document.getElementById('file-input').click()">PILIH FILE</button>
+            <div style="width: 100%; max-width: 400px; margin-top: 20px;">
+                <input type="text" id="upload-title" placeholder="Judul Video" style="width: 100%; padding: 12px; margin-bottom: 12px; background: #1a1a1a; border: 1px solid #333; border-radius: 4px; color: white;">
+                <textarea id="upload-desc" placeholder="Deskripsi Video" style="width: 100%; padding: 12px; margin-bottom: 12px; background: #1a1a1a; border: 1px solid #333; border-radius: 4px; color: white; min-height: 80px;"></textarea>
+            </div>
+            <button class="upload-submit-btn" onclick="document.getElementById('file-input').click()">PILIH FILE & UPLOAD</button>
             <input type="file" id="file-input" style="display: none;" accept="video/*">
         </div>
         <div class="upload-content" id="upload-progress" style="display: none;">
@@ -421,6 +427,14 @@
             </div>
             <button type="submit" class="submit-btn">Berikutnya</button>
         </form>
+        <div style="margin: 16px 0; display: flex; align-items: center; gap: 8px; color: #555;">
+            <div style="flex-grow: 1; height: 1px; background: #333;"></div>
+            <span>ATAU</span>
+            <div style="flex-grow: 1; height: 1px; background: #333;"></div>
+        </div>
+        <button id="google-login-btn" class="submit-btn" style="background-color: #4285F4; display: flex; align-items: center; justify-content: center; gap: 12px;">
+            <i class="fab fa-google"></i> Login dengan Google
+        </button>
         <p style="margin-top: 24px; font-size: 14px;">
             Bukan perangkat Anda? Gunakan jendela Tamu untuk login secara pribadi.
         </p>
