@@ -198,11 +198,11 @@ header {
     overflow: hidden !important;
 }
 
-/* Skeleton Animation */
+/* Skeleton Animation v2 */
 .skeleton {
-    background: linear-gradient(90deg, #1a1a1a 25%, #272727 50%, #1a1a1a 75%);
+    background: linear-gradient(90deg, #1a1a1a 25%, #221a2b 50%, #1a1a1a 75%);
     background-size: 200% 100%;
-    animation: skeleton-loading 1.5s infinite;
+    animation: skeleton-loading 2s infinite linear;
 }
 
 @keyframes skeleton-loading {
@@ -676,7 +676,12 @@ body.no-categories main {
     opacity: 0.9;
 }
 
-/* Anda (Profile) View Styles */
+/* Anda (Profile) View Styles v2 */
+.anda-container {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
 .anda-header {
     display: flex;
     padding: 16px;
@@ -702,10 +707,37 @@ body.no-categories main {
     font-size: 24px;
 }
 
-.anda-info p {
-    margin: 4px 0;
+.anda-meta-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
     color: var(--text-secondary);
     font-size: 14px;
+    margin: 4px 0 12px;
+}
+
+.purple-text {
+    color: var(--primary-color);
+    font-weight: 500;
+}
+
+.anda-actions-row {
+    display: flex;
+    gap: 8px;
+}
+
+.anda-action-btn {
+    background: var(--hover-bg);
+    border: none;
+    color: var(--text-color);
+    padding: 8px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
 }
 
 .anda-section {
@@ -721,7 +753,7 @@ body.no-categories main {
     font-size: 18px;
 }
 
-.anda-history-list {
+.anda-horizontal-list {
     display: flex;
     overflow-x: auto;
     padding: 0 16px;
@@ -730,7 +762,7 @@ body.no-categories main {
     -ms-overflow-style: none;
 }
 
-.anda-history-list::-webkit-scrollbar {
+.anda-horizontal-list::-webkit-scrollbar {
     display: none;
 }
 
@@ -738,6 +770,7 @@ body.no-categories main {
     min-width: 160px;
     width: 160px;
     flex-shrink: 0;
+    cursor: pointer;
 }
 
 .anda-history-thumb {
@@ -763,11 +796,94 @@ body.no-categories main {
     overflow: hidden;
 }
 
+/* Playlist Cards */
+.anda-playlist-card {
+    min-width: 160px;
+    width: 160px;
+    cursor: pointer;
+}
+
+.playlist-thumb-stack {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16/9;
+    margin-bottom: 8px;
+}
+
+.playlist-thumb {
+    width: 100%;
+    height: 100%;
+    background: #272727;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    color: var(--primary-color);
+    position: relative;
+    z-index: 3;
+    overflow: hidden;
+    border: 1px solid var(--border-color);
+}
+
+.thumb-layer {
+    position: absolute;
+    width: 90%;
+    height: 100%;
+    background: #1a1a1a;
+    border-radius: 12px;
+    left: 5%;
+    border: 1px solid var(--border-color);
+}
+
+.layer-2 { top: -4px; z-index: 2; opacity: 0.8; width: 85%; left: 7.5%; }
+.layer-3 { top: -8px; z-index: 1; opacity: 0.5; width: 80%; left: 10%; }
+
+.playlist-info {
+    padding: 0 4px;
+}
+
+.playlist-title {
+    font-size: 14px;
+    font-weight: 500;
+    margin-bottom: 2px;
+}
+
+.playlist-meta {
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+/* Menu List */
+.anda-menu-list {
+    margin-top: 8px;
+}
+
 .anda-menu-item {
     display: flex;
     align-items: center;
     padding: 12px 16px;
-    gap: 16px;
+    gap: 20px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background 0.2s;
+}
+
+.anda-menu-item i {
+    width: 24px;
+    text-align: center;
+    font-size: 18px;
+    color: var(--text-color);
+}
+
+.anda-menu-item:active {
+    background: var(--hover-bg);
+}
+
+.anda-menu-item-sep {
+    height: 1px;
+    background: var(--border-color);
+    margin: 8px 16px;
 }
 
 .user-avatar-small {
@@ -2230,4 +2346,161 @@ iframe {
     background: var(--primary-color);
     width: 0%;
     transition: width 0.3s;
+}
+
+/* Shorts Feed v2 */
+#shorts-feed-overlay {
+    background: black;
+    z-index: 7500;
+}
+
+.shorts-feed-container {
+    height: 100%;
+    overflow-y: scroll;
+    scroll-snap-type: y mandatory;
+    scrollbar-width: none;
+}
+
+.shorts-feed-container::-webkit-scrollbar {
+    display: none;
+}
+
+.short-feed-item {
+    height: 100%;
+    width: 100%;
+    scroll-snap-align: start;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #000;
+}
+
+.short-video-wrapper {
+    height: 100%;
+    width: 100%;
+    max-width: 500px;
+    position: relative;
+}
+
+.short-video-wrapper iframe {
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+}
+
+.short-overlay-ui {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 20px;
+    background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
+    color: white;
+    z-index: 10;
+}
+
+.short-ui-actions {
+    position: absolute;
+    right: 12px;
+    bottom: 100px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    align-items: center;
+    z-index: 11;
+}
+
+.short-action-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+}
+
+.short-action-btn .icon-circle {
+    width: 48px;
+    height: 48px;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.short-action-btn span {
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.short-info-text h3 {
+    font-size: 16px;
+    margin-bottom: 8px;
+}
+
+.short-info-text p {
+    font-size: 14px;
+    color: #eee;
+    margin-bottom: 12px;
+}
+
+.close-shorts-btn {
+    position: fixed;
+    top: 16px;
+    left: 16px;
+    z-index: 8000;
+    background: rgba(0,0,0,0.4);
+    border-radius: 50%;
+}
+
+/* Gesture Controls */
+.gesture-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    pointer-events: auto;
+    z-index: 10;
+}
+
+.gesture-indicator {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: rgba(157, 78, 221, 0);
+    color: white;
+    opacity: 0;
+    transition: background 0.3s, opacity 0.3s;
+    pointer-events: none;
+}
+
+.gesture-indicator.active {
+    background: rgba(157, 78, 221, 0.2);
+    opacity: 1;
+}
+
+.gesture-indicator i {
+    font-size: 24px;
+    margin-bottom: 8px;
+}
+
+.gesture-indicator span {
+    font-weight: bold;
+    font-size: 14px;
+}
+
+.gesture-indicator.left {
+    border-top-right-radius: 50% 100%;
+    border-bottom-right-radius: 50% 100%;
+}
+
+.gesture-indicator.right {
+    border-top-left-radius: 50% 100%;
+    border-bottom-left-radius: 50% 100%;
 }
