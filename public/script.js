@@ -29,22 +29,29 @@ let localComments = JSON.parse(localStorage.getItem('playtube_comments') || '{}'
 let likedVideos = JSON.parse(localStorage.getItem('playtube_liked') || '[]');
 let savedVideos = JSON.parse(localStorage.getItem('playtube_saved') || '[]');
 
-// Supabase Configuration (Replace with your actual credentials)
-const SUPABASE_URL = 'https://your-project-url.supabase.co';
-const SUPABASE_ANON_KEY = 'your-anon-key';
+// Supabase Configuration
 let supabaseClient = null;
 
-if (typeof supabasejs !== 'undefined' || typeof Supabase !== 'undefined') {
-    const createClient = (typeof supabasejs !== 'undefined') ? supabasejs.createClient : Supabase.createClient;
+async function initSupabase() {
     try {
-        supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    } catch(e) {
-        console.warn("Supabase not configured correctly. Check SETUP_GUIDE.md");
+        const response = await fetch('/api/config');
+        const config = await response.json();
+
+        if (config.supabaseUrl && config.supabaseAnonKey && (typeof supabasejs !== 'undefined' || typeof Supabase !== 'undefined')) {
+            const createClient = (typeof supabasejs !== 'undefined') ? supabasejs.createClient : Supabase.createClient;
+            supabaseClient = createClient(config.supabaseUrl, config.supabaseAnonKey);
+            console.log("Supabase initialized successfully");
+        } else {
+            console.warn("Supabase credentials missing or library not loaded.");
+        }
+    } catch (e) {
+        console.error("Failed to fetch Supabase config:", e);
     }
 }
 
 // Initialize
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+    await initSupabase();
     // Create Sheet Actions
     const sheetItems = document.querySelectorAll('#create-sheet .sheet-item');
     if (sheetItems.length >= 3) {
@@ -346,7 +353,7 @@ function renderSkeleton(count) {
 const videoModal = document.getElementById('video-modal');
 const closePlayer = document.getElementById('close-player');
 
-function openVideo(video, fromPopState = false) {
+async function openVideo(video, fromPopState = false) {
     const videoId = typeof video === 'string' ? video : video.id;
     const title = video.title || 'Judul Video';
     const channel = video.channel || 'Channel Name';
@@ -369,6 +376,15 @@ function openVideo(video, fromPopState = false) {
     videoHistory = videoHistory.filter(v => v.id !== videoId);
     videoHistory.unshift(videoObj);
     localStorage.setItem('playtube_video_history', JSON.stringify(videoHistory.slice(0, 50)));
+
+    if (supabaseClient && currentUser) {
+        await supabaseClient.from('history').upsert({
+            user_id: currentUser.id,
+            video_id: videoId,
+            video_data: videoObj,
+            viewed_at: new Date().toISOString()
+        });
+    }
 
     videoModal.classList.add('active');
     toggleActive('mini-player', false);
@@ -934,12 +950,16 @@ async function checkLoginState() {
         const { data: { session }, error } = await supabaseClient.auth.getSession();
         if (session) {
             currentUser = {
+                id: session.user.id,
                 name: session.user.user_metadata.full_name || session.user.email.split('@')[0],
                 email: session.user.email,
                 avatar: session.user.user_metadata.avatar_url
             };
             localStorage.setItem('playtube_user', JSON.stringify(currentUser));
             loginModal.classList.remove('active');
+
+            // Sync data from Supabase
+            syncFromSupabase();
             return;
         }
     }
@@ -1134,18 +1154,33 @@ function stringToColor(str) {
     return color;
 }
 
-function toggleSubscribe(btn, channelId, channelName) {
+async function toggleSubscribe(btn, channelId, channelName) {
     const index = subscriptions.findIndex(s => s.id === channelId);
+    const isAdding = (index === -1);
 
-    if (index === -1) {
+    if (isAdding) {
         subscriptions.push({id: channelId, name: channelName});
         btn.innerText = 'Disubscribe';
         btn.classList.add('active');
         showToast('Ditambahkan ke subscription');
+
+        if (supabaseClient && currentUser) {
+            await supabaseClient.from('subscriptions').upsert({
+                user_id: currentUser.id,
+                channel_id: channelId,
+                channel_name: channelName
+            });
+        }
     } else {
         subscriptions.splice(index, 1);
         btn.innerText = 'Subscribe';
         btn.classList.remove('active');
+
+        if (supabaseClient && currentUser) {
+            await supabaseClient.from('subscriptions')
+                .delete()
+                .match({ user_id: currentUser.id, channel_id: channelId });
+        }
     }
     localStorage.setItem('playtube_subs', JSON.stringify(subscriptions));
 }
@@ -1154,7 +1189,8 @@ function toggleAction(btn) {
     btn.classList.toggle('active');
 }
 
-function toggleLike(btn, type) {
+async function toggleLike(btn, type) {
+    if (!lastVideo) return;
     const isAlreadyActive = btn.classList.contains('active');
     const actionsBar = btn.parentElement;
     const likeBtn = actionsBar.children[0];
@@ -1168,10 +1204,20 @@ function toggleLike(btn, type) {
         if (isAlreadyActive) {
             btn.classList.remove('active');
             likeCountSpan.innerText = `${count} rb`;
+            likedVideos = likedVideos.filter(id => id !== lastVideo.id);
+
+            if (supabaseClient && currentUser) {
+                await supabaseClient.from('likes').delete().match({ user_id: currentUser.id, video_id: lastVideo.id });
+            }
         } else {
             btn.classList.add('active');
             likeCountSpan.innerText = `${count + 1} rb`;
             showToast('Anda menyukai video ini');
+            likedVideos.push(lastVideo.id);
+
+            if (supabaseClient && currentUser) {
+                await supabaseClient.from('likes').upsert({ user_id: currentUser.id, video_id: lastVideo.id, type: 'like' });
+            }
         }
     } else {
         likeBtn.classList.remove('active');
@@ -1180,8 +1226,13 @@ function toggleLike(btn, type) {
         } else {
             btn.classList.add('active');
             showToast('Video ini tidak disukai');
+
+            if (supabaseClient && currentUser) {
+                await supabaseClient.from('likes').upsert({ user_id: currentUser.id, video_id: lastVideo.id, type: 'dislike' });
+            }
         }
     }
+    localStorage.setItem('playtube_liked', JSON.stringify(likedVideos));
 }
 
 function openShare() {
@@ -1252,14 +1303,28 @@ function handleFileUpload(e) {
             }
         };
 
-        xhr.onload = () => {
+        xhr.onload = async () => {
             if (xhr.status === 200) {
-                showToast('Video berhasil diupload ke YouTube!');
+                const response = JSON.parse(xhr.responseText);
+                showToast(response.message);
+
+                if (supabaseClient && currentUser) {
+                    await supabaseClient.from('user_videos').insert({
+                        user_id: currentUser.id,
+                        title: response.title,
+                        description: response.description,
+                        video_url: response.videoUrl,
+                        thumbnail: 'https://picsum.photos/seed/' + Date.now() + '/320/180',
+                        views: '0',
+                        time: 'Baru saja'
+                    });
+                }
+
                 setTimeout(() => {
                     toggleActive('upload-overlay', false);
                     document.getElementById('upload-title').value = '';
                     document.getElementById('upload-desc').value = '';
-                    loadTrending();
+                    loadUserVideos();
                 }, 1500);
             } else {
                 showToast('Upload gagal: ' + xhr.responseText);
@@ -1283,21 +1348,30 @@ function mockLive() {
     }, 3000);
 }
 
-function toggleSave(btn) {
+async function toggleSave(btn) {
     const isSaved = btn.classList.toggle('active');
     if (isSaved) {
         showToast('Disimpan ke Tonton Nanti');
         if (lastVideo) {
             savedVideos.push(lastVideo);
-            localStorage.setItem('playtube_saved', JSON.stringify(savedVideos));
+            if (supabaseClient && currentUser) {
+                await supabaseClient.from('saved_videos').upsert({
+                    user_id: currentUser.id,
+                    video_id: lastVideo.id,
+                    video_data: lastVideo
+                });
+            }
         }
     } else {
         showToast('Dihapus dari Tonton Nanti');
         if (lastVideo) {
             savedVideos = savedVideos.filter(v => v.id !== lastVideo.id);
-            localStorage.setItem('playtube_saved', JSON.stringify(savedVideos));
+            if (supabaseClient && currentUser) {
+                await supabaseClient.from('saved_videos').delete().match({ user_id: currentUser.id, video_id: lastVideo.id });
+            }
         }
     }
+    localStorage.setItem('playtube_saved', JSON.stringify(savedVideos));
 }
 
 async function fetchVideosByChannel(channelId) {
@@ -1403,18 +1477,74 @@ function loadAnda() {
     }
 }
 
-function loadUserVideos() {
+async function loadUserVideos() {
     currentCategory = 'user_videos';
-    resultsGrid.innerHTML = `
-        <div class="anda-section-header" style="padding: 16px;">Video Anda</div>
-        <div class="empty-home-container" style="min-height: 40vh;">
-            <div class="empty-home-icon"><svg height="64" viewBox="0 0 24 24" width="64" fill="currentColor"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"></path></svg></div>
-            <div class="empty-home-title">Belum ada video</div>
-            <p style="color: var(--text-secondary); margin-bottom: 24px;">Tap tombol buat untuk mulai berbagi video dengan orang lain.</p>
-            <button class="chip active" onclick="openUpload()">Upload Video</button>
+    resultsGrid.innerHTML = '<div class="anda-section-header" style="padding: 16px;">Video Anda</div><div class="loading">Memuat video Anda...</div>';
+    window.scrollTo(0, 0);
+
+    let userVideos = [];
+    if (supabaseClient && currentUser) {
+        const { data } = await supabaseClient.from('user_videos').select('*').eq('user_id', currentUser.id);
+        if (data) userVideos = data;
+    }
+
+    if (userVideos.length === 0) {
+        resultsGrid.innerHTML = `
+            <div class="anda-section-header" style="padding: 16px;">Video Anda</div>
+            <div class="empty-home-container" style="min-height: 40vh;">
+                <div class="empty-home-icon"><svg height="64" viewBox="0 0 24 24" width="64" fill="currentColor"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"></path></svg></div>
+                <div class="empty-home-title">Belum ada video</div>
+                <p style="color: var(--text-secondary); margin-bottom: 24px;">Tap tombol buat untuk mulai berbagi video dengan orang lain.</p>
+                <button class="chip active" onclick="openUpload()">Upload Video</button>
+            </div>
+        `;
+    } else {
+        resultsGrid.innerHTML = '<div class="anda-section-header" style="padding: 16px;">Video Anda</div>';
+        const grid = document.createElement('div');
+        grid.className = 'grid';
+        userVideos.forEach(v => {
+            const card = document.createElement('div');
+            card.className = 'card';
+            card.innerHTML = `
+                <div class="thumbnail-container"><img src="${v.thumbnail}"></div>
+                <div class="video-details">
+                    <div class="video-info">
+                        <h3 class="video-title">${v.title}</h3>
+                        <p class="video-meta">${v.views} x ditonton • ${v.time}</p>
+                    </div>
+                </div>
+            `;
+            card.onclick = () => openLocalVideo(v);
+            grid.appendChild(card);
+        });
+        resultsGrid.appendChild(grid);
+    }
+}
+
+function openLocalVideo(video) {
+    // Custom logic to play local video instead of YouTube iframe
+    lastVideo = video;
+    videoModal.classList.add('active');
+    toggleActive('mini-player', false);
+
+    const playerWrapper = document.getElementById('player-wrapper');
+    playerWrapper.innerHTML = `<video src="${video.video_url}" controls autoplay style="width:100%; height:100%;"></video>`;
+
+    // Ambient Glow
+    const glow = document.getElementById('ambient-glow');
+    glow.style.background = `radial-gradient(circle at center, #9d4edd66 0%, rgba(15, 15, 15, 0) 70%)`;
+
+    // Inject Details
+    const details = document.getElementById('video-details-content');
+    details.innerHTML = `
+        <h2>${video.title}</h2>
+        <div class="meta">${video.views} x ditonton • ${video.time}</div>
+        <div class="description-box expanded">
+            <div class="description-text">${video.description}</div>
         </div>
     `;
-    window.scrollTo(0, 0);
+
+    document.getElementById('suggested-results').innerHTML = '';
 }
 
 function loadDownloads() {
@@ -1436,7 +1566,52 @@ async function logout() {
     }
     currentUser = null;
     localStorage.removeItem('playtube_user');
+    // Clear local cache of user data
+    localStorage.removeItem('playtube_subs');
+    localStorage.removeItem('playtube_video_history');
+    localStorage.removeItem('playtube_liked');
+    localStorage.removeItem('playtube_saved');
     location.reload();
+}
+
+async function syncFromSupabase() {
+    if (!supabaseClient || !currentUser) return;
+
+    try {
+        // Fetch Subscriptions
+        const { data: subs } = await supabaseClient.from('subscriptions').select('*').eq('user_id', currentUser.id);
+        if (subs) {
+            subscriptions = subs.map(s => ({ id: s.channel_id, name: s.channel_name }));
+            localStorage.setItem('playtube_subs', JSON.stringify(subscriptions));
+        }
+
+        // Fetch History
+        const { data: hist } = await supabaseClient.from('history')
+            .select('*')
+            .eq('user_id', currentUser.id)
+            .order('viewed_at', { ascending: false })
+            .limit(50);
+        if (hist) {
+            videoHistory = hist.map(h => h.video_data);
+            localStorage.setItem('playtube_video_history', JSON.stringify(videoHistory));
+        }
+
+        // Fetch Likes
+        const { data: likes } = await supabaseClient.from('likes').select('*').eq('user_id', currentUser.id).eq('type', 'like');
+        if (likes) {
+            likedVideos = likes.map(l => l.video_id);
+            localStorage.setItem('playtube_liked', JSON.stringify(likedVideos));
+        }
+
+        // Fetch Saved
+        const { data: saved } = await supabaseClient.from('saved_videos').select('*').eq('user_id', currentUser.id);
+        if (saved) {
+            savedVideos = saved.map(s => s.video_data);
+            localStorage.setItem('playtube_saved', JSON.stringify(savedVideos));
+        }
+    } catch (e) {
+        console.warn("Error syncing from Supabase:", e);
+    }
 }
 
 function loadTrending() {

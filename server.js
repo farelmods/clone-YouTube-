@@ -14,8 +14,17 @@ app.use(fileUpload());
 
 const API_KEY = process.env.YOUTUBE_API_KEY;
 const PORT = process.env.PORT || 3000;
+const SUPABASE_URL = process.env.SUPABASE_URL;
+const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY;
 
 const YOUTUBE_API_BASE = "https://www.googleapis.com/youtube/v3";
+
+app.get("/api/config", (req, res) => {
+  res.json({
+    supabaseUrl: SUPABASE_URL,
+    supabaseAnonKey: SUPABASE_ANON_KEY
+  });
+});
 
 app.get("/api/search", async (req, res) => {
   const query = req.query.q;
@@ -134,32 +143,26 @@ app.post("/api/upload", async (req, res) => {
 
   const videoFile = req.files.video;
   const { title, description } = req.body;
+  const fileName = Date.now() + "_" + videoFile.name.replace(/\s/g, "_");
+  const uploadPath = __dirname + "/public/uploads/" + fileName;
 
-  // Di sini seharusnya ada logika OAuth untuk mendapatkan token user
-  // Untuk keperluan demo/tugas, kita asumsikan integrasi YouTube API
   try {
-    // Simulasi proses upload ke YouTube
-    console.log(`Mengupload ${videoFile.name} ke YouTube dengan judul: ${title}`);
+    // Real file storage
+    await videoFile.mv(uploadPath);
+    console.log(`Video disimpan di: ${uploadPath}`);
 
-    // Jika ada API_KEY dan OAuth Token, kita gunakan googleapis:
-    /*
-    const youtube = google.youtube({ version: 'v3', auth: oauth2Client });
-    await youtube.videos.insert({
-      part: 'snippet,status',
-      requestBody: {
-        snippet: { title, description },
-        status: { privacyStatus: 'public' }
-      },
-      media: { body: videoFile.data }
+    const videoUrl = "/uploads/" + fileName;
+
+    res.json({
+      success: true,
+      message: "Video berhasil diupload ke Playtube!",
+      videoUrl: videoUrl,
+      title: title,
+      description: description
     });
-    */
-
-    // Simulasi delay upload
-    setTimeout(() => {
-        res.json({ success: true, message: "Video berhasil diupload ke YouTube!" });
-    }, 3000);
 
   } catch (err) {
+    console.error("Upload error:", err);
     res.status(500).send("Gagal upload: " + err.message);
   }
 });
