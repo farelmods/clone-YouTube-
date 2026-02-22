@@ -396,7 +396,7 @@ async function openVideo(video, fromPopState = false) {
 
     const playerWrapper = document.getElementById('player-wrapper');
     playerWrapper.innerHTML = `
-        <iframe id="main-video-iframe" src="https://www.youtube.com/embed/${videoId}?autoplay=1&enablejsapi=1" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+        <iframe id="main-video-iframe" src="https://www.youtube.com/embed/${videoId}?autoplay=1&enablejsapi=1&playsinline=1&rel=0&modestbranding=1&iv_load_policy=3" allow="autoplay; encrypted-media" allowfullscreen></iframe>
         <div class="gesture-overlay" id="gesture-overlay">
             <div class="gesture-indicator left" id="gesture-left">
                 <i class="fas fa-backward"></i>
@@ -523,7 +523,7 @@ closePlayer.onclick = () => {
     const miniThumb = document.getElementById('mini-thumb');
     if (lastVideo) {
         const videoId = typeof lastVideo === 'string' ? lastVideo : lastVideo.id;
-        miniThumb.innerHTML = `<iframe src="https://www.youtube.com/embed/${videoId}" frameborder="0"></iframe>`;
+        miniThumb.innerHTML = `<iframe src="https://www.youtube.com/embed/${videoId}?playsinline=1&rel=0&modestbranding=1" frameborder="0"></iframe>`;
         toggleActive('mini-player', true);
     }
 };
@@ -1991,7 +1991,7 @@ function renderShortsItems(videos) {
         item.className = 'short-feed-item';
         item.innerHTML = `
             <div class="short-video-wrapper">
-                <iframe src="https://www.youtube.com/embed/${video.id}?autoplay=0&controls=0&loop=1&playlist=${video.id}" allow="autoplay"></iframe>
+                <iframe src="https://www.youtube.com/embed/${video.id}?autoplay=0&controls=0&loop=1&playlist=${video.id}&playsinline=1&rel=0&modestbranding=1&iv_load_policy=3" allow="autoplay"></iframe>
                 <div class="short-overlay-ui">
                     <div class="short-info-text">
                         <h3>@${video.channel.replace(/\s+/g, '').toLowerCase()}</h3>
