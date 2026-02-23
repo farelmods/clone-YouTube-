@@ -197,11 +197,16 @@ async function fetchVideos(query, append = false) {
 
         nextPageToken = data.nextPageToken || '';
         const videos = data.items.map(normalizeVideoData);
-        renderVideos(videos, append);
+        if (videos.length === 0 && !append) {
+            resultsGrid.innerHTML = '<div class="loading">Tidak ada video ditemukan.</div>';
+        } else {
+            renderVideos(videos, append);
+        }
     } catch (err) {
-        console.warn('API Error, using mock data:', err);
-        const videos = generateMockVideos(query, RESULTS_PER_PAGE);
-        renderVideos(videos, append);
+        console.error('API Error:', err);
+        if (!append) {
+            resultsGrid.innerHTML = `<div class="loading">Gagal memuat video: ${err.message}. Pastikan API Key sudah benar.</div>`;
+        }
     } finally {
         isLoading = false;
     }
@@ -230,12 +235,16 @@ async function fetchTrending(append = false) {
         const videos = data.items.map(normalizeVideoData);
 
         if (!append) renderShorts();
-        renderVideos(videos, append);
+        if (videos.length === 0 && !append) {
+            resultsGrid.innerHTML = '<div class="loading">Tidak ada video trending ditemukan.</div>';
+        } else {
+            renderVideos(videos, append);
+        }
     } catch (err) {
-        console.warn('API Error, using mock data:', err);
-        const videos = generateMockVideos('trending', RESULTS_PER_PAGE);
-        if (!append) renderShorts();
-        renderVideos(videos, append);
+        console.error('API Error:', err);
+        if (!append) {
+            resultsGrid.innerHTML = `<div class="loading">Gagal memuat video trending.</div>`;
+        }
     } finally {
         isLoading = false;
     }
@@ -309,27 +318,8 @@ function renderVideos(videos, append = false) {
 }
 
 function renderShorts() {
-    const shortsWrapper = document.createElement('div');
-    shortsWrapper.className = 'shorts-container';
-    shortsWrapper.innerHTML = `
-        <div class="shorts-header">
-            <svg height="24" viewBox="0 0 24 24" width="24" fill="#ff0000"><path d="M17.77 10.32l-1.2-.5L18 8.82a3.74 3.74 0 00-2.39-6.75 3.7 3.7 0 00-1.51.32l-10 4.1a3.75 3.75 0 00-.07 7l1.2.5L4 15.18a3.75 3.75 0 002.46 6.76 3.7 3.7 0 001.46-.3l10-4.1a3.75 3.75 0 00.07-7l-.22-.12zM10 14.5v-5l5 2.5-5 2.5z"></path></svg>
-            Shorts
-        </div>
-        <div class="shorts-grid">
-            ${[1,2,3,4,5].map(i => `
-                <div class="short-card" onclick="openVideo('short_${i}')">
-                    <div class="short-thumbnail">
-                        <img src="https://picsum.photos/seed/short${i*currentPage}/200/350" alt="Short">
-                        <div style="position: absolute; bottom: 8px; left: 8px; font-weight: bold; font-size: 10px; background: rgba(0,0,0,0.6); padding: 2px 4px; border-radius: 2px;">SHORTS</div>
-                    </div>
-                    <div class="short-title">Video Shorts Menarik ${i} #shorts</div>
-                    <div class="short-views">${Math.floor(Math.random()*90)+10} jt ditonton</div>
-                </div>
-            `).join('')}
-        </div>
-    `;
-    resultsGrid.appendChild(shortsWrapper);
+    // Menghapus mock shorts dari beranda
+    console.log("Mock shorts removed.");
 }
 
 function renderSkeleton(count) {
@@ -479,35 +469,8 @@ async function openVideo(video, fromPopState = false) {
         </div>
     `;
 
-    // Render Suggested
-    const suggested = document.getElementById('suggested-results');
-    suggested.innerHTML = '';
-    const videos = generateMockVideos('suggested', 10);
-    const grid = document.createElement('div');
-    grid.className = 'grid';
-    videos.forEach(v => {
-        const card = document.createElement('div');
-        card.className = 'card suggested-card';
-        card.style.flexDirection = 'row';
-        card.style.gap = '8px';
-        card.style.padding = '8px';
-        card.innerHTML = `
-            <div class="thumbnail-container" style="width: 140px; margin-bottom: 0;">
-                <img src="${v.thumbnail}">
-            </div>
-            <div class="video-info">
-                <h3 class="video-title" style="font-size: 14px; -webkit-line-clamp: 2;">${v.title}</h3>
-                <p class="channel-name" style="font-size: 12px;">${v.channel}</p>
-                <p class="video-meta" style="font-size: 11px;">${v.views} ditonton</p>
-            </div>
-        `;
-        card.onclick = () => {
-            playerWrapper.innerHTML = `<div class="loading">Memuat...</div>`;
-            setTimeout(() => openVideo(v.id), 300);
-        };
-        grid.appendChild(card);
-    });
-    suggested.appendChild(grid);
+    // Suggested videos will be fetched asynchronously
+    fetchRelatedVideos(title);
 }
 
 closePlayer.onclick = () => {
@@ -627,11 +590,16 @@ async function fetchCategory(category, append = false) {
 
         nextPageToken = data.nextPageToken || '';
         const videos = data.items.map(normalizeVideoData);
-        renderVideos(videos, append);
+        if (videos.length === 0 && !append) {
+            resultsGrid.innerHTML = '<div class="loading">Kategori ini kosong.</div>';
+        } else {
+            renderVideos(videos, append);
+        }
     } catch (err) {
-        console.warn('API Error, using mock data:', err);
-        const videos = generateMockVideos(category, RESULTS_PER_PAGE);
-        renderVideos(videos, append);
+        console.error('API Error:', err);
+        if (!append) {
+            resultsGrid.innerHTML = `<div class="loading">Gagal memuat kategori.</div>`;
+        }
     } finally {
         isLoading = false;
     }
@@ -827,18 +795,7 @@ document.getElementById('close-notif').onclick = () => {
 
 function renderNotifications() {
     const list = document.getElementById('notif-list');
-    list.innerHTML = [1,2,3,4,5,6,7,8].map(i => `
-        <div class="notif-item">
-            <div class="notif-avatar" style="background-color: ${stringToColor('User '+i)}"></div>
-            <div class="notif-content">
-                <div class="notif-text"><b>Channel Viral ${i}</b> baru saja mengupload video: 10 Cara Membuat Playtube Jadi Ungu</div>
-                <div class="notif-time">2 jam yang lalu</div>
-            </div>
-            <div class="notif-thumb">
-                <img src="https://picsum.photos/seed/notif${i}/120/68">
-            </div>
-        </div>
-    `).join('');
+    list.innerHTML = '<p style="padding: 20px; text-align: center; color: #aaa;">Tidak ada notifikasi baru.</p>';
 }
 
 // Comments
@@ -1058,37 +1015,6 @@ function setupRippleEffect() {
 }
 
 // Mock Data Generator
-function generateMockVideos(query, count) {
-    const videos = [];
-    const titles = [
-        `Cara Membuat Playtube Berwarna Ungu - Tutorial Lengkap ${query}`,
-        `Lagu Pop Terpopuler 2024 - Koleksi Terbaik ${query}`,
-        `Melihat Keindahan Alam Nusantara ${query}`,
-        `Review Smartphone Ungu Terbaru - Spek Gahar! ${query}`,
-        `10 Makanan Viral Minggu Ini di Playtube ${query}`,
-        `Unboxing Kado Misterius #shorts ${query}`,
-        `Live Streaming Game Horor Paling Menakutkan ${query}`,
-        `Rahasia di Balik Algoritma Playtube Ungu ${query}`,
-        `Vlog Harian: Jalan-jalan ke Taman Bunga ${query}`
-    ];
-
-    for (let i = 0; i < count; i++) {
-        const id = Math.random().toString(36).substr(2, 9);
-        videos.push({
-            id: id,
-            title: titles[i % titles.length],
-            thumbnail: `https://picsum.photos/seed/${id}/360/202`,
-            channel: `Saluran Ungu ${String.fromCharCode(65 + (i % 26))}`,
-            channelId: `channel_${i % 5}`,
-            views: (Math.random() * 1000).toFixed(1) + ' rb',
-            time: (i + 1) + ' jam yang lalu',
-            verified: Math.random() > 0.5,
-            description: 'Ini adalah deskripsi singkat untuk video mock ini. Silakan tonton sampai habis!'
-        });
-    }
-    return videos;
-}
-
 // Swipe Gestures for Mini Player & Sheets
 let touchStartY = 0;
 const handleTouchStart = (e) => touchStartY = e.touches[0].clientY;
@@ -1402,21 +1328,27 @@ async function fetchVideosByChannel(channelId) {
         if (data.error || !data.items) throw new Error();
         return data.items.map(normalizeVideoData);
     } catch (err) {
-        return generateMockVideos(channelId, 12);
+        console.error('Fetch channel videos error:', err);
+        return [];
     }
 }
 
 function loadHistory() {
     currentCategory = 'history';
-    const displayHistory = videoHistory.length > 0 ? videoHistory : generateMockVideos('history', 6);
+    const displayHistory = videoHistory;
 
     resultsGrid.innerHTML = '';
+    if (displayHistory.length === 0) {
+        resultsGrid.innerHTML = '<div class="anda-section-header" style="padding: 16px;">Riwayat</div><p style="padding: 16px; color: #aaa;">Belum ada riwayat tontonan.</p>';
+        return;
+    }
+
     const section = document.createElement('div');
     section.className = 'anda-section';
     section.innerHTML = `
         <div class="anda-section-header">
             Riwayat
-            ${videoHistory.length > 0 ? '<button class="chip" onclick="clearHistory()">Hapus Semua</button>' : ''}
+            <button class="chip" onclick="clearHistory()">Hapus Semua</button>
         </div>
     `;
 
@@ -1843,24 +1775,29 @@ function loadSubscriptions() {
     grid.className = 'grid';
     resultsGrid.appendChild(grid);
 
-    // Mocking subscription videos
-    const videos = generateMockVideos('subs', 12);
-    videos.forEach(v => {
-        const card = document.createElement('div');
-        card.className = 'card';
-        card.innerHTML = `
-            <div class="thumbnail-container"><img src="${v.thumbnail}"></div>
-            <div class="video-details">
-                <div class="channel-avatar" style="background-color: ${stringToColor(v.channel)}">${v.channel.charAt(0)}</div>
-                <div class="video-info">
-                    <h3 class="video-title">${v.title}</h3>
-                    <p class="channel-name">${v.channel}</p>
-                    <p class="video-meta">${v.views} x ditonton • ${v.time}</p>
+    // Ambil video asli dari salah satu channel subscription sebagai contoh
+    fetchVideosByChannel(subscriptions[0].id).then(videos => {
+        if (videos.length === 0) {
+            grid.innerHTML = '<p style="padding: 20px; color: #aaa;">Belum ada video baru dari subscription Anda.</p>';
+            return;
+        }
+        videos.forEach(v => {
+            const card = document.createElement('div');
+            card.className = 'card';
+            card.innerHTML = `
+                <div class="thumbnail-container"><img src="${v.thumbnail}"></div>
+                <div class="video-details">
+                    <div class="channel-avatar" style="background-color: ${stringToColor(v.channel)}">${v.channel.charAt(0)}</div>
+                    <div class="video-info">
+                        <h3 class="video-title">${v.title}</h3>
+                        <p class="channel-name">${v.channel}</p>
+                        <p class="video-meta">${v.views} x ditonton • ${v.time}</p>
+                    </div>
                 </div>
-            </div>
-        `;
-        card.onclick = () => openVideo(v);
-        grid.appendChild(card);
+            `;
+            card.onclick = () => openVideo(v);
+            grid.appendChild(card);
+        });
     });
 }
 
@@ -1972,13 +1909,13 @@ async function openShortsFeed() {
         const videos = (data.items || []).map(normalizeVideoData);
 
         if (videos.length === 0) {
-            // Fallback mock
-            renderShortsItems(generateMockVideos('shorts', 5));
+            container.innerHTML = '<p style="padding: 20px; color: #aaa; text-align: center;">Belum ada video Shorts yang ditemukan.</p>';
         } else {
             renderShortsItems(videos);
         }
     } catch (e) {
-        renderShortsItems(generateMockVideos('shorts', 5));
+        console.error('Fetch shorts error:', e);
+        container.innerHTML = '<p style="padding: 20px; color: #aaa; text-align: center;">Gagal memuat Shorts.</p>';
     }
 }
 
@@ -2121,4 +2058,51 @@ function setupShortsAutoPlay() {
     }, options);
 
     document.querySelectorAll('.short-feed-item').forEach(item => observer.observe(item));
+}
+
+async function fetchRelatedVideos(query) {
+    const suggested = document.getElementById('suggested-results');
+    suggested.innerHTML = '<div class="loading">Memuat video terkait...</div>';
+
+    try {
+        const response = await fetch(`/api/search?q=${encodeURIComponent(query)}&maxResults=8`);
+        const data = await response.json();
+        const videos = (data.items || []).map(normalizeVideoData);
+
+        suggested.innerHTML = '';
+        if (videos.length === 0) {
+            suggested.innerHTML = '<p style="padding: 20px; color: #aaa;">Tidak ada video terkait ditemukan.</p>';
+            return;
+        }
+
+        const grid = document.createElement('div');
+        grid.className = 'grid';
+        videos.forEach(v => {
+            const card = document.createElement('div');
+            card.className = 'card suggested-card';
+            card.style.flexDirection = 'row';
+            card.style.gap = '8px';
+            card.style.padding = '8px';
+            card.innerHTML = `
+                <div class="thumbnail-container" style="width: 140px; margin-bottom: 0;">
+                    <img src="${v.thumbnail}">
+                </div>
+                <div class="video-info">
+                    <h3 class="video-title" style="font-size: 14px; -webkit-line-clamp: 2;">${v.title}</h3>
+                    <p class="channel-name" style="font-size: 12px;">${v.channel}</p>
+                    <p class="video-meta" style="font-size: 11px;">${v.views} ditonton</p>
+                </div>
+            `;
+            card.onclick = () => {
+                const playerWrapper = document.getElementById('player-wrapper');
+                playerWrapper.innerHTML = `<div class="loading">Memuat...</div>`;
+                setTimeout(() => openVideo(v), 300);
+            };
+            grid.appendChild(card);
+        });
+        suggested.appendChild(grid);
+    } catch (err) {
+        console.error('Fetch related videos error:', err);
+        suggested.innerHTML = '<p style="padding: 20px; color: #aaa;">Gagal memuat video terkait.</p>';
+    }
 }

@@ -48,13 +48,8 @@ app.get("/api/search", async (req, res) => {
 
     res.json(response.data);
   } catch (err) {
-    console.error("Search error, fallback to mock:", err.response?.data || err.message);
-    res.json({
-        items: [
-                { id: { videoId: 'dQw4w9WgXcQ' }, snippet: { title: 'Lagu Ungu - Tercipta Untukmu (Official Music Video)', channelTitle: 'UNGU Band', thumbnails: { medium: { url: 'https://picsum.photos/seed/ungu1/320/180' } }, publishedAt: new Date().toISOString() } },
-                { id: { videoId: '3JZ_D3ELwOQ' }, snippet: { title: 'Tutorial Desain UI Keren dengan Tema Ungu', channelTitle: 'Playtube Design', thumbnails: { medium: { url: 'https://picsum.photos/seed/ungu2/320/180' } }, publishedAt: new Date().toISOString() } }
-        ]
-    });
+    console.error("Search error:", err.response?.data || err.message);
+    res.status(500).json({ error: "Gagal mengambil data dari YouTube API. Pastikan YOUTUBE_API_KEY sudah diatur.", items: [] });
   }
 });
 
@@ -74,21 +69,8 @@ app.get("/api/trending", async (req, res) => {
 
     res.json(response.data);
   } catch (err) {
-    console.error("Trending error, fallback to mock:", err.response?.data || err.message);
-    const mockItems = [];
-    for (let i = 1; i <= 10; i++) {
-        mockItems.push({
-            id: 'video' + i,
-            snippet: {
-                    title: 'Video Trending Playtube ' + i + ' - Konten Menarik Hari Ini',
-                channelTitle: 'Saluran Ungu ' + i,
-                    thumbnails: { medium: { url: `https://picsum.photos/seed/trending${i}/320/180` } },
-                publishedAt: new Date().toISOString()
-            },
-            statistics: { viewCount: Math.floor(Math.random() * 1000000).toString() }
-        });
-    }
-    res.json({ items: mockItems });
+    console.error("Trending error:", err.response?.data || err.message);
+    res.status(500).json({ error: "Gagal mengambil video trending.", items: [] });
   }
 });
 
@@ -182,23 +164,8 @@ app.get("/api/comments", async (req, res) => {
     });
     res.json(response.data);
   } catch (err) {
-    console.error("Comments error, fallback to mock:", err.response?.data || err.message);
-    const mockComments = [];
-    for (let i = 1; i <= 5; i++) {
-        mockComments.push({
-            snippet: {
-                topLevelComment: {
-                    snippet: {
-                        authorDisplayName: "Pengguna Playtube " + i,
-                        textDisplay: "Wah kontennya keren banget! Tema ungunya sangat estetik.",
-                        publishedAt: new Date().toISOString(),
-                        authorProfileImageUrl: `https://picsum.photos/seed/user${i}/48/48`
-                    }
-                }
-            }
-        });
-    }
-    res.json({ items: mockComments });
+    console.error("Comments error:", err.response?.data || err.message);
+    res.json({ items: [] });
   }
 });
 

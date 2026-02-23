@@ -94,6 +94,8 @@ CREATE POLICY "Users can manage their own uploads" ON user_videos FOR ALL USING 
 
 ## 2. Menghubungkan ke YouTube API (Pencarian & Komentar)
 
+**Catatan Penting:** Aplikasi ini sekarang secara eksklusif menggunakan data asli dari YouTube API. Jika API Key tidak diatur, video tidak akan muncul (tidak ada lagi simulasi/mock data).
+
 1.  Buka [Google Cloud Console](https://console.cloud.google.com/).
 2.  Buat proyek baru atau pilih proyek yang sudah ada.
 3.  Cari dan aktifkan **YouTube Data API v3**.
